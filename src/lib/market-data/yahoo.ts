@@ -1,6 +1,6 @@
 import type { OHLCV } from '../../types'
 
-const BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart'
+const PROXY_PATH = '/api/yahoo/v8/finance/chart'
 
 const RESOLUTION_TO_YAHOO: Record<string, string> = {
   '1': '1m',
@@ -27,7 +27,7 @@ export async function getCandles(
     interval,
   })
 
-  const res = await fetch(`${BASE_URL}/${encodeURIComponent(symbol)}?${params}`)
+  const res = await fetch(`${PROXY_PATH}/${encodeURIComponent(symbol)}?${params}`)
   if (!res.ok) throw new Error(`Yahoo Finance chart error: ${res.status}`)
 
   const json = await res.json()
