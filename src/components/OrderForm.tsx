@@ -23,6 +23,8 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
   const [stopPrice, setStopPrice] = useState('')
   const [limitPrice, setLimitPrice] = useState('')
   const [notes, setNotes] = useState('')
+  const [stopLoss, setStopLoss] = useState(portfolio.settings.defaultStopLoss > 0 ? String(portfolio.settings.defaultStopLoss) : '')
+  const [takeProfit, setTakeProfit] = useState(portfolio.settings.defaultTakeProfit > 0 ? String(portfolio.settings.defaultTakeProfit) : '')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [previewQuote, setPreviewQuote] = useState<{ price: number; change: number } | null>(null)
@@ -80,6 +82,8 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
         stopPrice: type === 'stop' || type === 'stop_limit' ? parseFloat(stopPrice) : undefined,
         limitPrice: type === 'stop_limit' ? parseFloat(limitPrice) : undefined,
         notes,
+        stopLoss: parseFloat(stopLoss) || undefined,
+        takeProfit: parseFloat(takeProfit) || undefined,
       })
 
       let quote
@@ -186,6 +190,16 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
           <input type="number" value={stopPrice} onChange={(e) => setStopPrice(e.target.value)} step="0.01" />
         </div>
       )}
+
+      <div className="form-row">
+        <label>Stop Loss (%)</label>
+        <input type="number" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} step="0.1" placeholder={String(portfolio.settings.defaultStopLoss)} />
+      </div>
+
+      <div className="form-row">
+        <label>Take Profit (%)</label>
+        <input type="number" value={takeProfit} onChange={(e) => setTakeProfit(e.target.value)} step="0.1" placeholder={String(portfolio.settings.defaultTakeProfit)} />
+      </div>
 
       <div className="form-row">
         <label>Notes</label>

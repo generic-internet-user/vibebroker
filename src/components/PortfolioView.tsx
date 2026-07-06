@@ -6,6 +6,7 @@ interface Props {
   portfolio: Portfolio
   onBuy: () => void
   onSell: () => void
+  onEditNotes: () => void
 }
 
 export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
@@ -92,14 +93,19 @@ export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
         </table>
       )}
 
-      {portfolio.notes && (
-        <div className="panel mt-2">
-          <div className="panel-header">Notes</div>
-          <div className="panel-body">
-            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font)' }}>{portfolio.notes}</pre>
-          </div>
+      <div className="panel mt-2">
+        <div className="panel-header">
+          <span>Notes</span>
+          <button className="btn-sm" onClick={onEditNotes}>{portfolio.notes ? 'Edit' : 'Add'}</button>
         </div>
-      )}
+        <div className="panel-body">
+          {portfolio.notes ? (
+            <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--font)' }}>{portfolio.notes}</pre>
+          ) : (
+            <span className="text-muted">No notes</span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

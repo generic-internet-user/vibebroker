@@ -52,6 +52,9 @@ export function validateOrderRisk(
   const currentPrice = quote.price
   const orderValue = order.quantity * currentPrice
 
+  const buyActions: OrderAction[] = ['buy', 'buy_to_cover']
+  const isBuy = buyActions.includes(order.action)
+
   if (settings.enforceRiskLimits && !settings.warningOnly) {
     if (
       settings.defaultOrderSize > 0 &&
@@ -73,21 +76,34 @@ export function validateOrderRisk(
       }
     }
 
-    const existingPositionsValue = portfolio.positions.reduce(
-      (sum, p) => sum + p.marketValue,
-      0
-    )
-    const newExposure = existingPositionsValue + orderValue
-    const maxExposure = (portfolio.cashBalance + existingPositionsValue) *
-      (settings.maxPortfolioExposure / 100)
+    if (isBuy) {
+      const existingPositionsValue = portfolio.positions.reduce(
+        (sum, p) => sum + p.marketValue,
+        0
+      )
+      const newExposure = existingPositionsValue + orderValue
+      const maxExposure = (portfolio.cashBalance + existingPositionsValue) *
+        (settings.maxPortfolioExposure / 100)
 
-    if (
-      settings.maxPortfolioExposure > 0 &&
-      newExposure > maxExposure
-    ) {
-      return {
-        valid: false,
-        reason: `Portfolio exposure would exceed max (${maxExposure.toFixed(2)})`,
+      if (
+        settings.maxPortfolioExposure > 0 &&
+        newExposure > maxExposure
+      ) {
+        return {
+          valid: false,
+          reason: `Portfolio exposure would exceed max (${maxExposure.toFixed(2)})`,
+        }
+      }
+
+      const position = portfolio.positions.find(p => p.symbol === order.symbol)
+      if (position && settings.maxPositionSize > 0) {
+        const totalAfterTrade = (position.quantity + order.quantity) * currentPrice
+        if (totalAfterTrade > settings.maxPositionSize) {
+          return {
+            valid: false,
+            reason: `Position size after trade would exceed max (${settings.maxPositionSize.toFixed(2)})`,
+          }
+        }
       }
     }
   }

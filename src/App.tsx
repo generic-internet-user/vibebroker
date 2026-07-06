@@ -19,6 +19,8 @@ export default function App() {
 
   const [showNewPortfolio, setShowNewPortfolio] = useState(false)
   const [showOrderForm, setShowOrderForm] = useState(false)
+  const [showNotesEditor, setShowNotesEditor] = useState(false)
+  const [notesText, setNotesText] = useState('')
   const [orderDefaultAction, setOrderDefaultAction] = useState<OrderAction>('buy')
   const [showSearch, setShowSearch] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -232,6 +234,14 @@ export default function App() {
     input.click()
   }
 
+  const handleSaveNotes = async () => {
+    if (!activePortfolio) return
+    const updated = { ...activePortfolio, notes: notesText, updatedAt: Date.now() }
+    await savePortfolio(updated)
+    dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
+    setShowNotesEditor(false)
+  }
+
   if (state.loading) {
     return <div className="flex items-center justify-center" style={{ height: '100vh' }}>Loading...</div>
   }
@@ -261,6 +271,7 @@ export default function App() {
               portfolio={activePortfolio}
               onBuy={() => { setOrderDefaultAction('buy'); setShowOrderForm(true) }}
               onSell={() => { setOrderDefaultAction('sell'); setShowOrderForm(true) }}
+              onEditNotes={() => { setNotesText(activePortfolio.notes); setShowNotesEditor(true) }}
             />
           ) : (
             <div className="empty-state" style={{ marginTop: 48 }}>
@@ -345,6 +356,23 @@ export default function App() {
           defaultAction={orderDefaultAction}
         />
       )}
+
+      <Modal open={showNotesEditor} onClose={() => setShowNotesEditor(false)} title="Portfolio Notes"
+        footer={
+          <>
+            <button onClick={() => setShowNotesEditor(false)}>Cancel</button>
+            <button className="btn-primary" onClick={handleSaveNotes}>Save</button>
+          </>
+        }
+      >
+        <textarea
+          value={notesText}
+          onChange={(e) => setNotesText(e.target.value)}
+          style={{ width: '100%', minHeight: 150 }}
+          placeholder="Write your notes here..."
+          autoFocus
+        />
+      </Modal>
 
       <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
