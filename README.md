@@ -69,4 +69,4 @@ src/
 
 ## License
 
-MIT
+GPLv2
