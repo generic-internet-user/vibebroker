@@ -1,18 +1,16 @@
 import type { Quote, OHLCV, Asset, Provider, UseCase } from '../../types'
 import * as finnhub from './finnhub'
 import * as twelvedata from './twelvedata'
-import * as yahoo from './yahoo'
 
 const PROVIDER_MODULES: Record<Provider, { getQuote?: (s: string) => Promise<Quote>; getProfile?: (s: string) => Promise<Asset | null>; getCandles?: (s: string, r: string, f: number, t: number) => Promise<OHLCV[]>; searchSymbol?: (q: string) => Promise<Asset[]> }> = {
   finnhub,
   twelvedata,
-  yahoo,
 }
 
 const DEFAULT_PRIORITY: Record<UseCase, Provider[]> = {
   quote: ['finnhub', 'twelvedata'],
   profile: ['finnhub', 'twelvedata'],
-  candles: ['twelvedata', 'yahoo', 'finnhub'],
+  candles: ['twelvedata', 'finnhub'],
   search: ['finnhub', 'twelvedata'],
 }
 

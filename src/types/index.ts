@@ -200,7 +200,7 @@ export interface IndicatorResult {
   value: number | [number, number] | [number, number, number]
 }
 
-export type Provider = 'finnhub' | 'twelvedata' | 'yahoo'
+export type Provider = 'finnhub' | 'twelvedata'
 export type UseCase = 'quote' | 'profile' | 'candles' | 'search'
 
 export interface AppSettings {

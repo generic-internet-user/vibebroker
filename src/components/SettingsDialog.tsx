@@ -16,13 +16,11 @@ interface Props {
 const PROVIDER_LABELS: Record<Provider, string> = {
   finnhub: 'Finnhub',
   twelvedata: 'Twelve Data',
-  yahoo: 'Yahoo Finance',
 }
 
 const PROVIDER_NOTES: Record<Provider, string> = {
   finnhub: 'Real-time quotes, 60 req/min free. No free candles.',
   twelvedata: '800 candle req/day free, 8 req/min.',
-  yahoo: 'No API key needed. Best for candles.',
 }
 
 const USECASE_LABELS: Record<UseCase, string> = {
@@ -32,7 +30,7 @@ const USECASE_LABELS: Record<UseCase, string> = {
   search: 'Symbol Search',
 }
 
-const ALL_PROVIDERS: Provider[] = ['finnhub', 'twelvedata', 'yahoo']
+const ALL_PROVIDERS: Provider[] = ['finnhub', 'twelvedata']
 
 export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingle, onExportAll, onExportCSV, onImport }: Props) {
   const { state, dispatch } = useApp()
