@@ -74,6 +74,14 @@ function toTdInterval(resolution: string): string {
   return RESOLUTION_TO_TD[resolution] || resolution
 }
 
+function toTradingDay(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  if (day === 0) d.setDate(d.getDate() - 2)
+  else if (day === 6) d.setDate(d.getDate() - 1)
+  return d
+}
+
 export async function getCandles(
   symbol: string,
   resolution: string = 'D',
@@ -81,8 +89,8 @@ export async function getCandles(
   to: number
 ): Promise<OHLCV[]> {
   const tdInterval = toTdInterval(resolution)
-  const tdStartDate = new Date(from * 1000).toISOString().split('T')[0]
-  const tdEndDate = new Date(to * 1000).toISOString().split('T')[0]
+  const tdStartDate = toTradingDay(new Date(from * 1000)).toISOString().split('T')[0]
+  const tdEndDate = toTradingDay(new Date(to * 1000)).toISOString().split('T')[0]
 
   return tryProviders('candles', (p) => {
     if (p === 'twelvedata') {
