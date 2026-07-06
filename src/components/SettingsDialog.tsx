@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../store/AppContext'
 import { Modal } from './Modals'
 import type { Provider, UseCase } from '../types'
+import { PROVIDERS, PROVIDER_LIST, USECASE_LABELS } from '../lib/market-data/registry'
 
 interface Props {
   open: boolean
@@ -12,25 +13,6 @@ interface Props {
   onExportCSV?: () => void
   onImport?: () => void
 }
-
-const PROVIDER_LABELS: Record<Provider, string> = {
-  finnhub: 'Finnhub',
-  twelvedata: 'Twelve Data',
-}
-
-const PROVIDER_NOTES: Record<Provider, string> = {
-  finnhub: 'Real-time quotes, 60 req/min free. No free candles.',
-  twelvedata: '800 candle req/day free, 8 req/min.',
-}
-
-const USECASE_LABELS: Record<UseCase, string> = {
-  quote: 'Real-time Quotes',
-  profile: 'Company Profiles',
-  candles: 'Historical Candles',
-  search: 'Symbol Search',
-}
-
-const ALL_PROVIDERS: Provider[] = ['finnhub', 'twelvedata']
 
 export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingle, onExportAll, onExportCSV, onImport }: Props) {
   const { state, dispatch } = useApp()
@@ -216,7 +198,7 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
             <div key={uc} className="form-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px' }}>
               <label style={{ marginBottom: 0 }}>{USECASE_LABELS[uc]}</label>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {ALL_PROVIDERS.map((p) => {
+                {PROVIDER_LIST.map((p) => {
                   const priority = localSettings.providerPriority[uc] || []
                   const idx = priority.indexOf(p)
                   const checked = idx !== -1
@@ -248,7 +230,7 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
                         }}
                         style={{ height: 'auto', width: 'auto' }}
                       />
-                      {PROVIDER_LABELS[p]}
+                      {PROVIDERS[p].label}
                     </label>
                   )
                 })}
@@ -260,7 +242,7 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
                     padding: '2px 8px', border: '1px solid var(--border)',
                     fontSize: '0.8rem', background: 'var(--bg-secondary)',
                   }}>
-                    {i + 1}. {PROVIDER_LABELS[p]}
+                    {i + 1}. {PROVIDERS[p].label}
                     {i > 0 && (
                       <button
                         className="btn-sm"
@@ -303,8 +285,8 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
             </div>
           ))}
           <div className="text-muted text-sm mt-2">
-            {ALL_PROVIDERS.map((p) => (
-              <div key={p}><strong>{PROVIDER_LABELS[p]}:</strong> {PROVIDER_NOTES[p]}</div>
+            {PROVIDER_LIST.map((p) => (
+              <div key={p}><strong>{PROVIDERS[p].label}:</strong> {PROVIDERS[p].note}</div>
             ))}
           </div>
         </div>

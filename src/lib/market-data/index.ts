@@ -1,18 +1,7 @@
-import type { Quote, OHLCV, Asset, Provider, UseCase } from '../../types'
-import * as finnhub from './finnhub'
+import type { Quote, OHLCV, Asset } from '../../types'
+import type { Provider, UseCase } from './registry'
+import { PROVIDERS, DEFAULT_PRIORITY } from './registry'
 import * as twelvedata from './twelvedata'
-
-const PROVIDER_MODULES: Record<Provider, { getQuote?: (s: string) => Promise<Quote>; getProfile?: (s: string) => Promise<Asset | null>; getCandles?: (s: string, r: string, f: number, t: number) => Promise<OHLCV[]>; searchSymbol?: (q: string) => Promise<Asset[]> }> = {
-  finnhub,
-  twelvedata,
-}
-
-const DEFAULT_PRIORITY: Record<UseCase, Provider[]> = {
-  quote: ['finnhub', 'twelvedata'],
-  profile: ['finnhub', 'twelvedata'],
-  candles: ['twelvedata', 'finnhub'],
-  search: ['finnhub', 'twelvedata'],
-}
 
 function getPriority(useCase: UseCase): Provider[] {
   try {
@@ -47,13 +36,13 @@ async function tryProviders<T>(
 
 export async function getQuote(symbol: string): Promise<Quote> {
   return tryProviders('quote',
-    (p) => PROVIDER_MODULES[p].getQuote!(symbol)
+    (p) => PROVIDERS[p].getQuote!(symbol)
   )
 }
 
 export async function getProfile(symbol: string): Promise<Asset | null> {
   return tryProviders('profile',
-    (p) => PROVIDER_MODULES[p].getProfile!(symbol)
+    (p) => PROVIDERS[p].getProfile!(symbol)
   )
 }
 
@@ -101,12 +90,12 @@ export async function getCandles(
     if (p === 'twelvedata') {
       return twelvedata.getCandles(symbol, tdInterval, tdStartDate, tdEndDate)
     }
-    return PROVIDER_MODULES[p].getCandles!(symbol, resolution, from, to)
+    return PROVIDERS[p].getCandles!(symbol, resolution, from, to)
   })
 }
 
 export async function searchSymbol(query: string): Promise<Asset[]> {
   return tryProviders('search',
-    (p) => PROVIDER_MODULES[p].searchSymbol!(query)
+    (p) => PROVIDERS[p].searchSymbol!(query)
   )
 }

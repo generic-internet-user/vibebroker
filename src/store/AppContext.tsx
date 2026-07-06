@@ -2,6 +2,7 @@ import { createContext, useContext, useReducer, useEffect, useCallback, type Rea
 import type { Portfolio, Watchlist, AppSettings, Provider, UseCase, Quote, Order, Trade, PerformanceSnapshot } from '../types'
 import { getAllPortfolios, savePortfolio, deletePortfolio, getAllWatchlists, saveWatchlist, deleteWatchlist } from '../db'
 import { defaultPortfolioSettings } from '../lib/trading'
+import { DEFAULT_PRIORITY } from '../lib/market-data/registry'
 
 interface AppState {
   portfolios: Portfolio[]
@@ -53,12 +54,7 @@ const defaultSettings: AppSettings = {
   undoWarningEnabled: true,
   forkWarningEnabled: true,
   pricePollingInterval: 15000,
-  providerPriority: {
-    quote: ['finnhub', 'twelvedata'],
-    profile: ['finnhub', 'twelvedata'],
-    candles: ['twelvedata', 'yahoo', 'finnhub'],
-    search: ['finnhub', 'twelvedata'],
-  },
+  providerPriority: { ...DEFAULT_PRIORITY },
 }
 
 function loadSettings(): AppSettings {

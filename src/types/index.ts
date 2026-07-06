@@ -200,8 +200,8 @@ export interface IndicatorResult {
   value: number | [number, number] | [number, number, number]
 }
 
-export type Provider = 'finnhub' | 'twelvedata'
-export type UseCase = 'quote' | 'profile' | 'candles' | 'search'
+import type { Provider, UseCase } from '../lib/market-data/registry'
+export type { Provider, UseCase }
 
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark'
