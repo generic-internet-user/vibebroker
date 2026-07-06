@@ -291,3 +291,5 @@ Assume a Nix-first agentic development workflow, with the primary entrypoint to 
   - `diff-review` - puts agent into reviewer role for either the current `git diff` or a specified commit/commit range.
   
 This prompt has been saved to `./PROMPT.md`; once done, spawn a research subagent with a prompt referencing this file, with its job being to validate compliance with the requirements laid out in said prompt (i.e. the very prompt you're reading right now), then make any and all necessary improvements based on its insights. Commit-and-push your work along the way, piece by piece -- this is a hard requirement (do NOT make one giant commit at the end of it all). Keep track of your harness's todo infra instead of ticking the first item off, doing _literally everything_ at your own pace, then ticking everything off in bulk once you're done with implementing everything.
+
+(Oh, and one more thing: _use your websearch MCP._ Please.)
