@@ -89,8 +89,15 @@ export async function getCandles(
   to: number
 ): Promise<OHLCV[]> {
   const tdInterval = toTdInterval(resolution)
-  const tdStartDate = toTradingDay(new Date(from * 1000)).toISOString().split('T')[0]
+  const isIntraday = tdInterval.endsWith('min') || tdInterval.endsWith('h')
   const tdEndDate = toTradingDay(new Date(to * 1000)).toISOString().split('T')[0]
+  let tdStartDate: string
+  if (isIntraday) {
+    const d = new Date(Math.min(from * 1000, to * 1000 - 7 * 86400 * 1000))
+    tdStartDate = toTradingDay(d).toISOString().split('T')[0]
+  } else {
+    tdStartDate = toTradingDay(new Date(from * 1000)).toISOString().split('T')[0]
+  }
 
   return tryProviders('candles', (p) => {
     if (p === 'twelvedata') {
