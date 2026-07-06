@@ -236,7 +236,7 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
                 })}
               </div>
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {(localSettings.providerPriority[uc] || []).map((p, i) => (
+                {(localSettings.providerPriority[uc] || []).filter((p) => p in PROVIDERS).map((p, i) => (
                   <span key={p} style={{
                     display: 'inline-flex', alignItems: 'center', gap: '4px',
                     padding: '2px 8px', border: '1px solid var(--border)',

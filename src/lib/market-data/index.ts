@@ -9,7 +9,7 @@ function getPriority(useCase: UseCase): Provider[] {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed.providerPriority?.[useCase]) {
-        return parsed.providerPriority[useCase]
+        return parsed.providerPriority[useCase].filter((p: string) => p in PROVIDERS)
       }
     }
   } catch { }
