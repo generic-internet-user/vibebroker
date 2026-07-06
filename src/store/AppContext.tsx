@@ -48,6 +48,8 @@ const defaultSettings: AppSettings = {
   finnhubApiKey: '',
   twelveDataApiKey: '',
   exchangeRateApiKey: '',
+  enableForking: true,
+  enableUndoRedo: true,
   undoWarningEnabled: true,
   forkWarningEnabled: true,
 }

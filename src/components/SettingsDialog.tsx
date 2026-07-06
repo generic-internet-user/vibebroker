@@ -10,6 +10,7 @@ interface Props {
 export function SettingsDialog({ open, onClose }: Props) {
   const { state, dispatch } = useApp()
   const [localSettings, setLocalSettings] = useState(state.settings)
+  const [activeTab, setActiveTab] = useState('API Keys')
 
   useEffect(() => {
     setLocalSettings(state.settings)
@@ -23,7 +24,6 @@ export function SettingsDialog({ open, onClose }: Props) {
   if (!open) return null
 
   const tabs = ['API Keys', 'General', 'Display', 'Simulation']
-  const [activeTab, setActiveTab] = useState('API Keys')
 
   return (
     <Modal
@@ -149,7 +149,25 @@ export function SettingsDialog({ open, onClose }: Props) {
       {activeTab === 'Simulation' && (
         <div>
           <div className="form-row">
-            <label>Undo Warning Enabled</label>
+            <label>Enable Forking</label>
+            <input
+              type="checkbox"
+              checked={localSettings.enableForking}
+              onChange={(e) => setLocalSettings({ ...localSettings, enableForking: e.target.checked })}
+              style={{ height: 'auto', width: 'auto' }}
+            />
+          </div>
+          <div className="form-row">
+            <label>Enable Undo/Redo</label>
+            <input
+              type="checkbox"
+              checked={localSettings.enableUndoRedo}
+              onChange={(e) => setLocalSettings({ ...localSettings, enableUndoRedo: e.target.checked })}
+              style={{ height: 'auto', width: 'auto' }}
+            />
+          </div>
+          <div className="form-row">
+            <label>Undo Warning</label>
             <input
               type="checkbox"
               checked={localSettings.undoWarningEnabled}
@@ -158,7 +176,7 @@ export function SettingsDialog({ open, onClose }: Props) {
             />
           </div>
           <div className="form-row">
-            <label>Fork Warning Enabled</label>
+            <label>Fork Warning</label>
             <input
               type="checkbox"
               checked={localSettings.forkWarningEnabled}

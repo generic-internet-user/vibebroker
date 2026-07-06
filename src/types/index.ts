@@ -214,6 +214,8 @@ export interface AppSettings {
   finnhubApiKey: string
   twelveDataApiKey: string
   exchangeRateApiKey: string
+  enableForking: boolean
+  enableUndoRedo: boolean
   undoWarningEnabled: boolean
   forkWarningEnabled: boolean
 }

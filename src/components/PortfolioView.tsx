@@ -1,4 +1,3 @@
-import React from 'react'
 import type { Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
 
@@ -9,7 +8,7 @@ interface Props {
   onEditNotes: () => void
 }
 
-export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
+export function PortfolioView({ portfolio, onBuy, onSell, onEditNotes }: Props) {
   const { state } = useApp()
   const totalValue = portfolio.cashBalance + portfolio.positions.reduce((s, p) => s + p.marketValue, 0)
   const totalPnL = portfolio.tradeHistory.reduce((s, t) => {
