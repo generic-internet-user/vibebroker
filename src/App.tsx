@@ -12,6 +12,7 @@ import { WatchlistsPanel } from './components/WatchlistsPanel'
 import { Modal, WarningScreen } from './components/Modals'
 import { defaultPortfolioSettings } from './lib/trading'
 import { exportPortfolioJSON, exportAllPortfolios, exportTradesCSV, downloadFile, readFileAsText, importAndSavePortfolios } from './lib/export'
+import * as marketData from './lib/market-data'
 import type { Portfolio, OrderAction } from './types'
 
 export default function App() {
@@ -19,8 +20,6 @@ export default function App() {
 
   const [showNewPortfolio, setShowNewPortfolio] = useState(false)
   const [showOrderForm, setShowOrderForm] = useState(false)
-  const [showNotesEditor, setShowNotesEditor] = useState(false)
-  const [notesText, setNotesText] = useState('')
   const [orderDefaultAction, setOrderDefaultAction] = useState<OrderAction>('buy')
   const [showSearch, setShowSearch] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -95,6 +94,30 @@ export default function App() {
       document.documentElement.classList.remove('dark')
     }
   }, [state.settings.theme])
+
+  useEffect(() => {
+    const symbols = new Set<string>()
+
+    if (activePortfolio) {
+      activePortfolio.positions.forEach(p => symbols.add(p.symbol))
+    }
+
+    if (symbols.size === 0) return
+
+    const fetchQuotes = async () => {
+      for (const symbol of symbols) {
+        try {
+          const quote = await marketData.getQuote(symbol)
+          dispatch({ type: 'UPDATE_QUOTE', symbol, quote })
+        } catch { }
+      }
+    }
+
+    fetchQuotes()
+    const interval = setInterval(fetchQuotes, 30000)
+
+    return () => clearInterval(interval)
+  }, [activePortfolio?.id])
 
   const handleNewPortfolio = async () => {
     if (!newPortfolioName.trim()) return
@@ -234,14 +257,6 @@ export default function App() {
     input.click()
   }
 
-  const handleSaveNotes = async () => {
-    if (!activePortfolio) return
-    const updated = { ...activePortfolio, notes: notesText, updatedAt: Date.now() }
-    await savePortfolio(updated)
-    dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
-    setShowNotesEditor(false)
-  }
-
   if (state.loading) {
     return <div className="flex items-center justify-center" style={{ height: '100vh' }}>Loading...</div>
   }
@@ -271,7 +286,6 @@ export default function App() {
               portfolio={activePortfolio}
               onBuy={() => { setOrderDefaultAction('buy'); setShowOrderForm(true) }}
               onSell={() => { setOrderDefaultAction('sell'); setShowOrderForm(true) }}
-              onEditNotes={() => { setNotesText(activePortfolio.notes); setShowNotesEditor(true) }}
             />
           ) : (
             <div className="empty-state" style={{ marginTop: 48 }}>
@@ -356,23 +370,6 @@ export default function App() {
           defaultAction={orderDefaultAction}
         />
       )}
-
-      <Modal open={showNotesEditor} onClose={() => setShowNotesEditor(false)} title="Portfolio Notes"
-        footer={
-          <>
-            <button onClick={() => setShowNotesEditor(false)}>Cancel</button>
-            <button className="btn-primary" onClick={handleSaveNotes}>Save</button>
-          </>
-        }
-      >
-        <textarea
-          value={notesText}
-          onChange={(e) => setNotesText(e.target.value)}
-          style={{ width: '100%', minHeight: 150 }}
-          placeholder="Write your notes here..."
-          autoFocus
-        />
-      </Modal>
 
       <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} />
       <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />

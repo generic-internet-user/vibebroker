@@ -8,7 +8,7 @@ import { Modal } from './Modals'
 export function WatchlistsPanel() {
   const { state, dispatch } = useApp()
   const [activeWatchlist, setActiveWatchlist] = useState<string | null>(null)
-  const [watchlistQuotes, setWatchlistQuotes] = useState<Record<string, Quote>>({})
+  const watchlistQuotes = state.quotes
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState('')
   const [addSymbol, setAddSymbol] = useState('')
@@ -19,18 +19,19 @@ export function WatchlistsPanel() {
     if (!currentWatchlist || currentWatchlist.symbols.length === 0) return
 
     const fetchQuotes = async () => {
-      const quotes: Record<string, Quote> = {}
       for (const symbol of currentWatchlist.symbols) {
-        try {
-          quotes[symbol] = await marketData.getQuote(symbol)
-        } catch { }
+        if (!state.quotes[symbol]) {
+          try {
+            const quote = await marketData.getQuote(symbol)
+            dispatch({ type: 'UPDATE_QUOTE', symbol, quote })
+          } catch { }
+        }
       }
-      setWatchlistQuotes(quotes)
     }
     fetchQuotes()
-    const interval = setInterval(fetchQuotes, 30000)
+    const interval = setInterval(fetchQuotes, 60000)
     return () => clearInterval(interval)
-  }, [currentWatchlist?.symbols.join(',')])
+  }, [currentWatchlist?.symbols.join(','), state.quotes])
 
   const handleCreate = async () => {
     if (!newName.trim()) return
