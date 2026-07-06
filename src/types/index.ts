@@ -218,6 +218,7 @@ export interface AppSettings {
   enableUndoRedo: boolean
   undoWarningEnabled: boolean
   forkWarningEnabled: boolean
+  pricePollingInterval: number
 }
 
 export interface ChartDefaults {

@@ -52,6 +52,7 @@ const defaultSettings: AppSettings = {
   enableUndoRedo: true,
   undoWarningEnabled: true,
   forkWarningEnabled: true,
+  pricePollingInterval: 15000,
 }
 
 function loadSettings(): AppSettings {

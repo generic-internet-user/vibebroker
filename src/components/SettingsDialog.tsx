@@ -143,6 +143,18 @@ export function SettingsDialog({ open, onClose }: Props) {
               style={{ height: 'auto', width: 'auto' }}
             />
           </div>
+          <div className="form-row">
+            <label>Price Polling (ms)</label>
+            <input
+              type="number"
+              value={localSettings.pricePollingInterval}
+              onChange={(e) => setLocalSettings({ ...localSettings, pricePollingInterval: parseInt(e.target.value) || 15000 })}
+              min="5000"
+              max="300000"
+              step="1000"
+            />
+            <span className="hint">{(localSettings.pricePollingInterval / 1000).toFixed(0)}s</span>
+          </div>
         </div>
       )}
 

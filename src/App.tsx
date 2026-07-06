@@ -114,10 +114,10 @@ export default function App() {
     }
 
     fetchQuotes()
-    const interval = setInterval(fetchQuotes, 30000)
+    const interval = setInterval(fetchQuotes, state.settings.pricePollingInterval)
 
     return () => clearInterval(interval)
-  }, [activePortfolio?.id])
+  }, [activePortfolio?.id, state.settings.pricePollingInterval])
 
   const handleNewPortfolio = async () => {
     if (!newPortfolioName.trim()) return
