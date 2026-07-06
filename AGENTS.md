@@ -61,5 +61,3 @@ VibeBroker is a local-first paper trading web application. All data lives in the
 Skills are in `.agents/skills/`:
 - `git-commit` – conventional commits with push
 - `diff-review` – review current diff or specified commit range
-
-Run `opencode` for available commands.
