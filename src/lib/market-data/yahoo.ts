@@ -13,12 +13,23 @@ const RESOLUTION_TO_YAHOO: Record<string, string> = {
   'M': '1mo',
 }
 
+const cache = new Map<string, { data: OHLCV[]; ttl: number }>()
+const CACHE_TTL = 60_000
+
+function cacheKey(symbol: string, resolution: string, from: number, to: number): string {
+  return `${symbol}:${resolution}:${from}:${to}`
+}
+
 export async function getCandles(
   symbol: string,
   resolution: string = 'D',
   from: number,
   to: number
 ): Promise<OHLCV[]> {
+  const key = cacheKey(symbol, resolution, from, to)
+  const cached = cache.get(key)
+  if (cached && Date.now() < cached.ttl) return cached.data
+
   const interval = RESOLUTION_TO_YAHOO[resolution] || '1d'
 
   const params = new URLSearchParams({
@@ -38,7 +49,7 @@ export async function getCandles(
   const quote = result.indicators?.quote?.[0]
   if (!quote) return []
 
-  return timestamps.map((t: number, i: number) => ({
+  const data = timestamps.map((t: number, i: number) => ({
     timestamp: t * 1000,
     open: quote.open[i] ?? 0,
     high: quote.high[i] ?? 0,
@@ -46,4 +57,7 @@ export async function getCandles(
     close: quote.close[i] ?? 0,
     volume: quote.volume[i] ?? 0,
   }))
+
+  cache.set(key, { data, ttl: Date.now() + CACHE_TTL })
+  return data
 }

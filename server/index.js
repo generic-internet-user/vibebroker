@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url'
 const PORT = parseInt(process.env.PORT || '5173', 10)
 const DIST = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 const YAHOO_HOST = 'query1.finance.yahoo.com'
+const CACHE_TTL = 60_000
 
 const MIME = {
   '.html': 'text/html',
@@ -19,6 +20,8 @@ const MIME = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
 }
+
+const cache = new Map()
 
 function serveStatic(filePath, res) {
   const ext = path.extname(filePath)
@@ -36,6 +39,14 @@ function serveStatic(filePath, res) {
 }
 
 function proxyRequest(req, res) {
+  const cacheKey = req.url + '|' + req.headers['accept-language'] || ''
+  const cached = cache.get(cacheKey)
+  if (cached && Date.now() < cached.ttl) {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'hit' })
+    res.end(cached.body)
+    return
+  }
+
   const url = new URL(req.url, `http://${YAHOO_HOST}`)
   const options = {
     hostname: YAHOO_HOST,
@@ -43,16 +54,30 @@ function proxyRequest(req, res) {
     path: url.pathname + url.search,
     method: req.method,
     headers: {
-      'User-Agent': 'VibeBroker/1.0',
+      'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0',
+      'Accept': req.headers['accept'] || '*/*',
+      'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.5',
     },
   }
 
   const proxyReq = https.request(options, (proxyRes) => {
-    const headers = { ...proxyRes.headers }
+    const headers = { ...proxyRes.headers, 'X-Cache': 'miss' }
     delete headers['set-cookie']
     delete headers['set-cookie2']
-    res.writeHead(proxyRes.statusCode, headers)
-    proxyRes.pipe(res)
+
+    if (proxyRes.statusCode === 200) {
+      const chunks = []
+      proxyRes.on('data', (chunk) => chunks.push(chunk))
+      proxyRes.on('end', () => {
+        const body = Buffer.concat(chunks)
+        cache.set(cacheKey, { body, ttl: Date.now() + CACHE_TTL })
+        res.writeHead(200, headers)
+        res.end(body)
+      })
+    } else {
+      res.writeHead(proxyRes.statusCode, headers)
+      proxyRes.pipe(res)
+    }
   })
 
   proxyReq.on('error', () => {
