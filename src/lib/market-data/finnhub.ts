@@ -61,7 +61,7 @@ export async function getCandles(
   if (!res.ok) throw new Error(`Finnhub candles error: ${res.status}`)
 
   const data = await res.json()
-  if (data.s === 'no_data') return []
+  if (data.s !== 'ok' || !Array.isArray(data.t)) return []
 
   return data.t.map((t: number, i: number) => ({
     timestamp: t * 1000,

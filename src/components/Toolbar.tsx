@@ -7,9 +7,11 @@ interface ToolbarProps {
   onSearch: () => void
   onSettings: () => void
   onKeyboardShortcuts: () => void
+  onUndo?: () => void
+  undoDisabled?: boolean
 }
 
-export function Toolbar({ onNewPortfolio, onNewOrder, onSearch, onSettings, onKeyboardShortcuts }: ToolbarProps) {
+export function Toolbar({ onNewPortfolio, onNewOrder, onSearch, onSettings, onKeyboardShortcuts, onUndo, undoDisabled }: ToolbarProps) {
   const { state } = useApp()
   const portfolioCount = state.portfolios.length
   const activeName = state.portfolios.find(p => p.id === state.activePortfolioId)?.name
@@ -35,6 +37,7 @@ export function Toolbar({ onNewPortfolio, onNewOrder, onSearch, onSettings, onKe
         <button onClick={onSearch}>Search <span className="key-hint">/</span></button>
         <button onClick={onKeyboardShortcuts}>Keys</button>
         <button onClick={onSettings}>Settings</button>
+        <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
       </div>
     </div>
   )

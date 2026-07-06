@@ -44,6 +44,11 @@ Future features and improvements planned for VibeBroker.
 - [ ] Portfolio optimization
 - [ ] Strategy comparison
 
+## UI
+
+- [ ] Resizable panels / modals
+- [ ] News ticker / bottom bar widget (awaiting API integration)
+
 ## Nice-to-have
 
 - [ ] Stock screener

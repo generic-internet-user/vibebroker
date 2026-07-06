@@ -8,7 +8,7 @@ import { OrderForm } from './components/OrderForm'
 import { SearchDialog } from './components/SearchDialog'
 import { SettingsDialog } from './components/SettingsDialog'
 import { KeyboardShortcuts } from './components/KeyboardShortcuts'
-import { WatchlistsPanel } from './components/WatchlistsPanel'
+
 import { Modal, WarningScreen } from './components/Modals'
 import { defaultPortfolioSettings } from './lib/trading'
 import { exportPortfolioJSON, exportAllPortfolios, exportTradesCSV, downloadFile, readFileAsText, importAndSavePortfolios } from './lib/export'
@@ -269,6 +269,8 @@ export default function App() {
         onSearch={() => setShowSearch(true)}
         onSettings={() => setShowSettings(true)}
         onKeyboardShortcuts={() => setShowShortcuts(true)}
+        onUndo={handleUndo}
+        undoDisabled={!state.settings.enableUndoRedo}
       />
 
       <div className="content">
@@ -297,24 +299,6 @@ export default function App() {
               </div>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="toolbar" style={{ borderTop: '1px solid var(--border)', borderBottom: 'none' }}>
-        <WatchlistsPanel />
-        <div className="spacer" />
-        <div className="toolbar-group">
-          {activePortfolio && (
-            <>
-              <button className="btn-sm" onClick={handleExportSingle}>Export</button>
-              <button className="btn-sm" onClick={handleExportCSV}>CSV</button>
-            </>
-          )}
-          <button className="btn-sm" onClick={handleExportAll}>Export All</button>
-          <button className="btn-sm" onClick={handleImport}>Import</button>
-        </div>
-        <div className="toolbar-group">
-          <button className="btn-sm" onClick={handleUndo} disabled={!state.settings.enableUndoRedo}>Undo</button>
         </div>
       </div>
 
@@ -372,7 +356,15 @@ export default function App() {
       )}
 
       <SearchDialog open={showSearch} onClose={() => setShowSearch(false)} />
-      <SettingsDialog open={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsDialog
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        activePortfolioId={state.activePortfolioId}
+        onExportSingle={handleExportSingle}
+        onExportAll={handleExportAll}
+        onExportCSV={handleExportCSV}
+        onImport={handleImport}
+      />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
 
       <WarningScreen

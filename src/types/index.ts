@@ -200,6 +200,9 @@ export interface IndicatorResult {
   value: number | [number, number] | [number, number, number]
 }
 
+export type Provider = 'finnhub' | 'twelvedata' | 'yahoo'
+export type UseCase = 'quote' | 'profile' | 'candles' | 'search'
+
 export interface AppSettings {
   theme: 'system' | 'light' | 'dark'
   dateFormat: string
@@ -219,6 +222,7 @@ export interface AppSettings {
   undoWarningEnabled: boolean
   forkWarningEnabled: boolean
   pricePollingInterval: number
+  providerPriority: Record<UseCase, Provider[]>
 }
 
 export interface ChartDefaults {

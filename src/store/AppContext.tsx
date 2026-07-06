@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react'
-import type { Portfolio, Watchlist, AppSettings, Quote, Order, Trade, PerformanceSnapshot } from '../types'
+import type { Portfolio, Watchlist, AppSettings, Provider, UseCase, Quote, Order, Trade, PerformanceSnapshot } from '../types'
 import { getAllPortfolios, savePortfolio, deletePortfolio, getAllWatchlists, saveWatchlist, deleteWatchlist } from '../db'
 import { defaultPortfolioSettings } from '../lib/trading'
 
@@ -53,6 +53,12 @@ const defaultSettings: AppSettings = {
   undoWarningEnabled: true,
   forkWarningEnabled: true,
   pricePollingInterval: 15000,
+  providerPriority: {
+    quote: ['finnhub', 'twelvedata'],
+    profile: ['finnhub', 'twelvedata'],
+    candles: ['twelvedata', 'yahoo', 'finnhub'],
+    search: ['finnhub', 'twelvedata'],
+  },
 }
 
 function loadSettings(): AppSettings {
@@ -163,15 +169,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [refreshData])
 
   useEffect(() => {
-    if (state.settings.finnhubApiKey) {
-      localStorage.setItem('finnhub_api_key', state.settings.finnhubApiKey)
-    }
-    if (state.settings.twelveDataApiKey) {
-      localStorage.setItem('twelvedata_api_key', state.settings.twelveDataApiKey)
-    }
-    if (state.settings.exchangeRateApiKey) {
-      localStorage.setItem('exchangerate_api_key', state.settings.exchangeRateApiKey)
-    }
+    localStorage.setItem('finnhub_api_key', state.settings.finnhubApiKey)
+    localStorage.setItem('twelvedata_api_key', state.settings.twelveDataApiKey)
+    localStorage.setItem('exchangerate_api_key', state.settings.exchangeRateApiKey)
   }, [state.settings])
 
   const activePortfolio = state.portfolios.find(

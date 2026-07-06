@@ -86,7 +86,7 @@ export function WatchlistsPanel() {
   }
 
   return (
-    <div className="panel" style={{ maxHeight: 400, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div className="panel-header">
         <span>Watchlists</span>
         <button className="btn-sm" onClick={() => setShowCreate(true)}>+</button>

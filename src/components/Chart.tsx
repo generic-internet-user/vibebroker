@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { createChart, type IChartApi, type ISeriesApi, type CandlestickSeriesPartialOptions, type LineSeriesPartialOptions } from 'lightweight-charts'
+import { createChart, CandlestickSeries, LineSeries, type IChartApi, type ISeriesApi } from 'lightweight-charts'
 import type { OHLCV, Timeframe } from '../types'
+import { useApp } from '../store/AppContext'
 import * as marketData from '../lib/market-data'
 import { calculateIndicator } from '../lib/indicators'
 
@@ -27,13 +28,19 @@ const RANGE_MAP: Record<Timeframe, { from: number; to: number }> = {
   '1Y': { from: 365, to: 0 },
 }
 
+function resolveCSSVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888888'
+}
+
 export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
+  const { state } = useApp()
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const indicatorSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
   const [data, setData] = useState<OHLCV[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [enabledIndicators, setEnabledIndicators] = useState<string[]>([])
   const [indicatorParams, setIndicatorParams] = useState<Record<string, Record<string, number>>>({})
 
@@ -45,33 +52,35 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
       height: 400,
       layout: {
         background: { color: 'transparent' },
-        textColor: 'var(--text-secondary)',
+        textColor: resolveCSSVar('--text-secondary'),
       },
       grid: {
-        vertLines: { color: 'var(--border-light)' },
-        horzLines: { color: 'var(--border-light)' },
+        vertLines: { color: resolveCSSVar('--border-light') },
+        horzLines: { color: resolveCSSVar('--border-light') },
       },
       crosshair: {
         mode: 0,
       },
       rightPriceScale: {
-        borderColor: 'var(--border)',
+        borderColor: resolveCSSVar('--border'),
       },
       timeScale: {
-        borderColor: 'var(--border)',
+        borderColor: resolveCSSVar('--border'),
         timeVisible: true,
         secondsVisible: false,
       },
+      handleScroll: false,
+      handleScale: false,
     })
 
     chartRef.current = chart
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: 'var(--positive)',
-      downColor: 'var(--negative)',
-      borderUpColor: 'var(--positive)',
-      borderDownColor: 'var(--negative)',
-      wickUpColor: 'var(--positive)',
-      wickDownColor: 'var(--negative)',
+    const candleSeries = chart.addSeries(CandlestickSeries, {
+      upColor: resolveCSSVar('--positive'),
+      downColor: resolveCSSVar('--negative'),
+      borderUpColor: resolveCSSVar('--positive'),
+      borderDownColor: resolveCSSVar('--negative'),
+      wickUpColor: resolveCSSVar('--positive'),
+      wickDownColor: resolveCSSVar('--negative'),
     })
     candleSeriesRef.current = candleSeries
 
@@ -92,6 +101,44 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
   }, [symbol])
 
   useEffect(() => {
+    if (!chartRef.current) return
+    const bg = resolveCSSVar('--bg-secondary')
+    const text = resolveCSSVar('--text-secondary')
+    const border = resolveCSSVar('--border')
+    const borderLight = resolveCSSVar('--border-light')
+    const positive = resolveCSSVar('--positive')
+    const negative = resolveCSSVar('--negative')
+
+    chartRef.current.applyOptions({
+      layout: {
+        background: { color: 'transparent' },
+        textColor: text,
+      },
+      grid: {
+        vertLines: { color: borderLight },
+        horzLines: { color: borderLight },
+      },
+      rightPriceScale: { borderColor: border },
+      timeScale: { borderColor: border },
+    })
+    if (candleSeriesRef.current) {
+      candleSeriesRef.current.applyOptions({
+        upColor: positive,
+        downColor: negative,
+        borderUpColor: positive,
+        borderDownColor: negative,
+        wickUpColor: positive,
+        wickDownColor: negative,
+      })
+    }
+    if (indicatorSeriesRef.current) {
+      indicatorSeriesRef.current.applyOptions({
+        color: '#4488ff',
+      })
+    }
+  }, [state.settings.theme])
+
+  useEffect(() => {
     if (!symbol) return
     setLoading(true)
     setData([])
@@ -107,6 +154,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         const candles = await marketData.getCandles(symbol, resolution, from, to)
         setData(candles)
         setLoading(false)
+        setError(candles.length === 0 ? `No candle data for ${symbol}` : null)
 
         if (candleSeriesRef.current && candles.length > 0) {
           candleSeriesRef.current.setData(
@@ -123,8 +171,9 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         if (chartRef.current && candles.length > 0) {
           chartRef.current.timeScale().fitContent()
         }
-      } catch {
+      } catch (err) {
         setLoading(false)
+        setError(`Failed to load data: ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
 
@@ -135,7 +184,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
     if (!candleSeriesRef.current || data.length === 0) return
 
     if (indicatorSeriesRef.current) {
-      candleSeriesRef.current.chart().removeSeries(indicatorSeriesRef.current)
+      chartRef.current?.removeSeries(indicatorSeriesRef.current)
       indicatorSeriesRef.current = null
     }
 
@@ -145,7 +194,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
       const results = calculateIndicator(indicator as any, data, params)
 
       if (results.length > 0) {
-        const lineSeries = candleSeriesRef.current.chart().addLineSeries({
+        const lineSeries = chartRef.current!.addSeries(LineSeries, {
           color: '#4488ff',
           lineWidth: 1,
           lastValueVisible: false,
@@ -207,7 +256,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         )}
         {!loading && data.length === 0 && (
           <div className="flex items-center justify-center" style={{ position: 'absolute', inset: 0 }}>
-            No data for {symbol}
+            {error || `No data for ${symbol}`}
           </div>
         )}
       </div>

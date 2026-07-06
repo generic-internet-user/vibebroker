@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { LayoutConfig, LayoutPanel, PanelType, Timeframe, Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
 import { Chart } from './Chart'
 import { PortfolioView } from './PortfolioView'
 import { WatchlistsPanel } from './WatchlistsPanel'
 
-const STORAGE_KEY = 'vibebroker_layout_presets'
+const PRESETS_KEY = 'vibebroker_layout_presets'
+const CURRENT_KEY = 'vibebroker_layout_current'
 
 function loadPresets(): LayoutConfig[] {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(PRESETS_KEY)
     return saved ? JSON.parse(saved) : []
   } catch {
     return []
@@ -17,7 +18,24 @@ function loadPresets(): LayoutConfig[] {
 }
 
 function savePresets(presets: LayoutConfig[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(presets))
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets))
+}
+
+function loadCurrentPanels(): LayoutPanel[] | null {
+  try {
+    const saved = localStorage.getItem(CURRENT_KEY)
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+}
+
+function saveCurrentPanels(panels: LayoutPanel[]) {
+  localStorage.setItem(CURRENT_KEY, JSON.stringify(panels))
+}
+
+function clearCurrentPanels() {
+  localStorage.removeItem(CURRENT_KEY)
 }
 
 const DEFAULT_PANELS: LayoutPanel[] = [
@@ -35,10 +53,21 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   const { state, dispatch } = useApp()
   const [presets, setPresets] = useState<LayoutConfig[]>(loadPresets)
   const [activePreset, setActivePreset] = useState<string | null>(null)
-  const [panels, setPanels] = useState<LayoutPanel[]>(DEFAULT_PANELS)
+  const [panels, setPanels] = useState<LayoutPanel[]>(() => {
+    return loadCurrentPanels() ?? DEFAULT_PANELS
+  })
   const [showManage, setShowManage] = useState(false)
   const [presetName, setPresetName] = useState('')
   const [chartTimeframes, setChartTimeframes] = useState<Record<string, any>>({})
+  const initialRender = useRef(true)
+
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false
+      return
+    }
+    saveCurrentPanels(panels)
+  }, [panels])
 
   useEffect(() => {
     if (activePreset) {
@@ -71,6 +100,12 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
     ))
   }
 
+  const setPanelSymbol = (id: string, symbol: string) => {
+    setPanels(prev => prev.map(p =>
+      p.id === id ? { ...p, symbol: symbol.toUpperCase() } : p
+    ))
+  }
+
   const savePreset = () => {
     if (!presetName.trim()) return
     const preset: LayoutConfig = {
@@ -96,6 +131,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   const handleSetPreset = (id: string | null) => {
     if (!id) {
       setPanels(DEFAULT_PANELS)
+      clearCurrentPanels()
       setActivePreset(null)
       return
     }
@@ -157,6 +193,14 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
               <div key={panel.id} className="panel" style={{ flex: 1, minWidth: 400, minHeight: 400 }}>
                 <div className="panel-header">
                   <span>{panel.title}</span>
+                  <input
+                    type="text"
+                    className="btn-sm"
+                    value={panel.symbol || ''}
+                    onChange={(e) => setPanelSymbol(panel.id, e.target.value)}
+                    placeholder={portfolio.positions[0]?.symbol || 'AAPL'}
+                    style={{ width: 80, height: 20, fontSize: 11, textTransform: 'uppercase' }}
+                  />
                   <div className="flex gap-1">
                     <select
                       value={panel.type}

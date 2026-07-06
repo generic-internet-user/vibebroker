@@ -1,13 +1,40 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../store/AppContext'
 import { Modal } from './Modals'
+import type { Provider, UseCase } from '../types'
 
 interface Props {
   open: boolean
   onClose: () => void
+  activePortfolioId?: string
+  onExportSingle?: () => void
+  onExportAll?: () => void
+  onExportCSV?: () => void
+  onImport?: () => void
 }
 
-export function SettingsDialog({ open, onClose }: Props) {
+const PROVIDER_LABELS: Record<Provider, string> = {
+  finnhub: 'Finnhub',
+  twelvedata: 'Twelve Data',
+  yahoo: 'Yahoo Finance',
+}
+
+const PROVIDER_NOTES: Record<Provider, string> = {
+  finnhub: 'Real-time quotes, 60 req/min free. No free candles.',
+  twelvedata: '800 candle req/day free, 8 req/min.',
+  yahoo: 'No API key needed. Best for candles.',
+}
+
+const USECASE_LABELS: Record<UseCase, string> = {
+  quote: 'Real-time Quotes',
+  profile: 'Company Profiles',
+  candles: 'Historical Candles',
+  search: 'Symbol Search',
+}
+
+const ALL_PROVIDERS: Provider[] = ['finnhub', 'twelvedata', 'yahoo']
+
+export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingle, onExportAll, onExportCSV, onImport }: Props) {
   const { state, dispatch } = useApp()
   const [localSettings, setLocalSettings] = useState(state.settings)
   const [activeTab, setActiveTab] = useState('API Keys')
@@ -23,7 +50,7 @@ export function SettingsDialog({ open, onClose }: Props) {
 
   if (!open) return null
 
-  const tabs = ['API Keys', 'General', 'Display', 'Simulation']
+  const tabs = ['API Keys', 'General', 'Display', 'Simulation', 'Export/Import', 'Providers']
 
   return (
     <Modal
@@ -154,6 +181,133 @@ export function SettingsDialog({ open, onClose }: Props) {
               step="1000"
             />
             <span className="hint">{(localSettings.pricePollingInterval / 1000).toFixed(0)}s</span>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'Export/Import' && (
+        <div>
+          <div className="form-row">
+            <label>Export Current Portfolio</label>
+            <button className="btn-sm" onClick={onExportSingle} disabled={!activePortfolioId}>Export JSON</button>
+          </div>
+          <div className="form-row">
+            <label>Export All Portfolios</label>
+            <button className="btn-sm" onClick={onExportAll}>Export All JSON</button>
+          </div>
+          <div className="form-row">
+            <label>Export Trade History (CSV)</label>
+            <button className="btn-sm" onClick={onExportCSV} disabled={!activePortfolioId}>Export CSV</button>
+          </div>
+          <div className="form-row">
+            <label>Import Portfolio</label>
+            <button className="btn-sm" onClick={onImport}>Import JSON</button>
+          </div>
+          <div className="text-muted text-sm mt-2">
+            JSON exports contain full portfolio state including orders and settings. CSV exports trade history for analysis in spreadsheets.
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'Providers' && (
+        <div>
+          <div className="text-sm text-muted mb-2">
+            Choose which provider handles each data type. Providers are tried in order &mdash; if the first fails, the next is used.
+          </div>
+          {(Object.keys(USECASE_LABELS) as UseCase[]).map((uc) => (
+            <div key={uc} className="form-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px' }}>
+              <label style={{ marginBottom: 0 }}>{USECASE_LABELS[uc]}</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {ALL_PROVIDERS.map((p) => {
+                  const priority = localSettings.providerPriority[uc] || []
+                  const idx = priority.indexOf(p)
+                  const checked = idx !== -1
+                  return (
+                    <label key={p} style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '4px 8px', border: '1px solid var(--border)',
+                      background: checked ? 'var(--accent-bg)' : 'transparent',
+                      cursor: 'pointer', fontSize: '0.85rem',
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          const next = [...priority]
+                          if (checked) {
+                            const filtered = next.filter((x) => x !== p)
+                            setLocalSettings({
+                              ...localSettings,
+                              providerPriority: { ...localSettings.providerPriority, [uc]: filtered },
+                            })
+                          } else {
+                            next.push(p)
+                            setLocalSettings({
+                              ...localSettings,
+                              providerPriority: { ...localSettings.providerPriority, [uc]: next },
+                            })
+                          }
+                        }}
+                        style={{ height: 'auto', width: 'auto' }}
+                      />
+                      {PROVIDER_LABELS[p]}
+                    </label>
+                  )
+                })}
+              </div>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {(localSettings.providerPriority[uc] || []).map((p, i) => (
+                  <span key={p} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    padding: '2px 8px', border: '1px solid var(--border)',
+                    fontSize: '0.8rem', background: 'var(--bg-secondary)',
+                  }}>
+                    {i + 1}. {PROVIDER_LABELS[p]}
+                    {i > 0 && (
+                      <button
+                        className="btn-sm"
+                        onClick={() => {
+                          const arr = [...localSettings.providerPriority[uc]]
+                          const idx = arr.indexOf(p)
+                          if (idx > 0) {
+                            [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]
+                            setLocalSettings({
+                              ...localSettings,
+                              providerPriority: { ...localSettings.providerPriority, [uc]: arr },
+                            })
+                          }
+                        }}
+                        style={{ padding: '0 4px', fontSize: '0.75rem', minWidth: 'auto' }}
+                        title="Move up"
+                      >▲</button>
+                    )}
+                    {i < localSettings.providerPriority[uc].length - 1 && (
+                      <button
+                        className="btn-sm"
+                        onClick={() => {
+                          const arr = [...localSettings.providerPriority[uc]]
+                          const idx = arr.indexOf(p)
+                          if (idx < arr.length - 1) {
+                            [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]
+                            setLocalSettings({
+                              ...localSettings,
+                              providerPriority: { ...localSettings.providerPriority, [uc]: arr },
+                            })
+                          }
+                        }}
+                        style={{ padding: '0 4px', fontSize: '0.75rem', minWidth: 'auto' }}
+                        title="Move down"
+                      >▼</button>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="text-muted text-sm mt-2">
+            {ALL_PROVIDERS.map((p) => (
+              <div key={p}><strong>{PROVIDER_LABELS[p]}:</strong> {PROVIDER_NOTES[p]}</div>
+            ))}
           </div>
         </div>
       )}
