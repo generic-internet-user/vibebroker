@@ -1,0 +1,14 @@
+{
+  "name": "git-commit",
+  "description": "Conventional commit with push",
+  "instructions": [
+    "Stage all intended files with `git add` (never use -A blindly)",
+    "Review the diff with `git diff --cached` to verify only intended changes",
+    "Write a conventional commit message: `type: short description`",
+    "Types: feat, fix, chore, docs, refactor, test, style",
+    "Keep the subject line under 72 characters",
+    "Add a blank line and body paragraph only if the change needs explanation",
+    "Commit with `git commit`",
+    "Push to origin with `git push`"
+  ]
+}
