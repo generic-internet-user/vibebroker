@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# npm
+.npm-cache/
+.npm-global/
+
+# XDG
+.cache/
+.local/
+
+# common build output
+dist/
+build/
+.next/
+.nuxt/
+.svelte-kit/
+coverage/
+
+# editor
+.direnv/
+.envrc
