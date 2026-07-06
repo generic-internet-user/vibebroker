@@ -3,7 +3,7 @@ import { useApp } from './store/AppContext'
 import { savePortfolio, deletePortfolio } from './db'
 import { Toolbar } from './components/Toolbar'
 import { PortfolioSidebar } from './components/PortfolioSidebar'
-import { PortfolioView } from './components/PortfolioView'
+import { LayoutContainer } from './components/LayoutContainer'
 import { OrderForm } from './components/OrderForm'
 import { SearchDialog } from './components/SearchDialog'
 import { SettingsDialog } from './components/SettingsDialog'
@@ -280,9 +280,9 @@ export default function App() {
           onFork={(id) => { setForkSourceId(id); setForkWarning(true) }}
         />
 
-        <div className="main">
+        <div className="main" style={{ overflow: 'hidden' }}>
           {activePortfolio ? (
-            <PortfolioView
+            <LayoutContainer
               portfolio={activePortfolio}
               onBuy={() => { setOrderDefaultAction('buy'); setShowOrderForm(true) }}
               onSell={() => { setOrderDefaultAction('sell'); setShowOrderForm(true) }}

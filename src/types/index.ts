@@ -253,6 +253,25 @@ export interface UndoAction {
   undo: () => void
 }
 
+export type PanelType = 'chart' | 'positions' | 'orders' | 'history' | 'performance' | 'watchlists' | 'notes'
+
+export interface LayoutPanel {
+  id: string
+  type: PanelType
+  title: string
+  symbol?: string
+  width: number
+  height: number
+}
+
+export interface LayoutConfig {
+  id: string
+  name: string
+  panels: LayoutPanel[]
+}
+
+export type Timeframe = '1D' | '1W' | '1M' | '3M' | '1Y'
+
 export interface SearchResult {
   type: 'symbol' | 'company' | 'trade' | 'watchlist' | 'portfolio'
   label: string

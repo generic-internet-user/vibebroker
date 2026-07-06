@@ -17,7 +17,7 @@ Future features and improvements planned for VibeBroker.
 - [ ] Partial fills (currently fills complete orders only)
 - [ ] After-hours trading support
 - [ ] Real-time WebSocket price streams
-- [ ] Chart component with TradingView lightweight-charts
+- [x] Chart component with TradingView lightweight-charts
 - [ ] Trade replay mode
 - [ ] Performance history with charts
 - [ ] Portfolio snapshots
@@ -25,7 +25,7 @@ Future features and improvements planned for VibeBroker.
 
 ## Technical indicators
 
-- [ ] Interactive chart overlay for indicators
+- [x] Interactive chart overlay for indicators
 - [ ] Indicator parameter customization UI
 - [ ] Saved indicator presets
 
@@ -55,9 +55,9 @@ Future features and improvements planned for VibeBroker.
 - [ ] Custom alerts
 - [ ] Price alerts
 - [ ] Notes on positions, assets, and trades
-- [ ] Multi-monitor layouts
-- [ ] Dockable panels
-- [ ] Layout presets
+- [x] Multi-monitor-ready layouts
+- [x] Dockable panels
+- [x] Layout presets
 - [ ] Plugin system (in-browser)
 - [ ] AI-assisted trade journal (BYOK LLM)
 - [ ] Collaborative portfolio sharing (opt-in)
