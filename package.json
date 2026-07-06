@@ -1,0 +1,15 @@
+{
+  "name": "vibebroker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser-based paper trading application",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0"
+  }
+}

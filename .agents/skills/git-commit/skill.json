@@ -1,0 +1,13 @@
+{
+  "name": "git-commit",
+  "description": "Commit changes with a conventional commit message and push to remote",
+  "instructions": [
+    "Stage all relevant changes with `git add`",
+    "Write a conventional commit message in the format `type(scope): description`",
+    "Valid types: feat, fix, refactor, docs, style, chore, test",
+    "Keep the commit message concise (under 72 characters) but descriptive",
+    "Push to the remote repository with `git push`",
+    "If the push fails due to remote changes, pull with rebase first (`git pull --rebase`)",
+    "Do NOT commit secrets, API keys, or large binary files"
+  ]
+}

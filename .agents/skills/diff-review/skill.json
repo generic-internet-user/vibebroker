@@ -1,0 +1,14 @@
+{
+  "name": "diff-review",
+  "description": "Review the current git diff or a specified commit/commit range",
+  "instructions": [
+    "If reviewing the working tree, run `git diff` to see unstaged changes",
+    "If reviewing staged changes, run `git diff --cached`",
+    "If a commit ref or range is specified, use `git diff <ref>` or `git log --oneline <range>`",
+    "Review for correctness, security, style consistency, and adherence to project conventions",
+    "Check for hardcoded secrets, API keys, or credentials",
+    "Verify that external API calls follow the established patterns",
+    "Ensure UI changes match the project's flat design aesthetic (no rounded corners, no shadows, system fonts only)",
+    "Return a structured review: summary, positives, concerns, suggestions"
+  ]
+}

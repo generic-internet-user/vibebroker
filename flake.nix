@@ -1,5 +1,5 @@
 {
-  description = "Boilerplate Node devshell";
+  description = "VibeBroker — browser-based paper trading application";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -9,11 +9,9 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
+        pkgs = import nixpkgs { inherit system; };
 
-        node = pkgs.nodejs_26;
+        node = pkgs.nodejs_22;
       in {
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
@@ -22,14 +20,9 @@
             jq
             curl
             wget
-            pkg-config
-            python3
-            gcc
-            gnumake
           ];
 
           shellHook = ''
-            # Keep npm's mess inside the repository.
             export NPM_CONFIG_PREFIX="$PWD/.npm-global"
             export NPM_CONFIG_CACHE="$PWD/.npm-cache"
 
@@ -39,17 +32,19 @@
 
             export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
 
-            # Optional XDG isolation for tools that respect it.
-            # I don't want NPM _anything_ in my homedir...
             export XDG_CACHE_HOME="$PWD/.cache"
             export XDG_DATA_HOME="$PWD/.local/share"
             export XDG_STATE_HOME="$PWD/.local/state"
 
-            # TODO: for any agent that stumbles upon this, provide 
-            # examples/version info relevant to whatever project this 
-            # happens to be placed in at the moment
-            echo "🚀 Node $(node --version)"
-            echo "📦 npm  $(npm --version)"
+            echo "VibeBroker devshell"
+            echo "  Node $(node --version)"
+            echo "  npm  $(npm --version)"
+            echo ""
+            echo "  Commands:"
+            echo "    npm install    — install dependencies"
+            echo "    npm run dev     — start dev server"
+            echo "    npm run build   — build for production"
+            echo "    npm run preview — preview production build"
           '';
         };
       });

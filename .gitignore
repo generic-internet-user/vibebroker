@@ -1,4 +1,4 @@
-# dependencies
+# Dependencies
 node_modules/
 
 # npm
@@ -9,7 +9,7 @@ node_modules/
 .cache/
 .local/
 
-# common build output
+# Build output
 dist/
 build/
 .next/
@@ -17,6 +17,20 @@ build/
 .svelte-kit/
 coverage/
 
-# editor
+# Environment
 .direnv/
 .envrc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Vite
+.vite/
