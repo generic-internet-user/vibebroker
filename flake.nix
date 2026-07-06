@@ -1,5 +1,5 @@
 {
-  description = "Boilerplate Node devshell";
+  description = "VibeBroker – local-first paper trading application";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -23,13 +23,9 @@
             curl
             wget
             pkg-config
-            python3
-            gcc
-            gnumake
           ];
 
           shellHook = ''
-            # Keep npm's mess inside the repository.
             export NPM_CONFIG_PREFIX="$PWD/.npm-global"
             export NPM_CONFIG_CACHE="$PWD/.npm-cache"
 
@@ -39,17 +35,18 @@
 
             export PATH="$NPM_CONFIG_PREFIX/bin:$PATH"
 
-            # Optional XDG isolation for tools that respect it.
-            # I don't want NPM _anything_ in my homedir...
             export XDG_CACHE_HOME="$PWD/.cache"
             export XDG_DATA_HOME="$PWD/.local/share"
             export XDG_STATE_HOME="$PWD/.local/state"
 
-            # TODO: for any agent that stumbles upon this, provide 
-            # examples/version info relevant to whatever project this 
-            # happens to be placed in at the moment
-            echo "🚀 Node $(node --version)"
-            echo "📦 npm  $(npm --version)"
+            echo "=== VibeBroker DevShell ==="
+            echo "Node  $(node --version)"
+            echo "npm   $(npm --version)"
+            echo ""
+            echo "Quick start:"
+            echo "  npm run dev     – start Vite dev server"
+            echo "  npm run build   – production build"
+            echo "  npm run preview – preview production build"
           '';
         };
       });
