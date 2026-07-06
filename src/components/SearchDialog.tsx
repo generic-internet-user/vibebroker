@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Asset } from '../types'
 import { useApp } from '../store/AppContext'
 import * as marketData from '../lib/market-data'

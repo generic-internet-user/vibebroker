@@ -28,7 +28,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.dark) {
     --bg: #111111;
     --bg-secondary: #1a1a1a;
     --bg-tertiary: #252525;
@@ -46,6 +46,25 @@
     --sell: #ee3333;
     --focus: #4488ff;
   }
+}
+
+.dark {
+  --bg: #111111;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #252525;
+  --text: #e0e0e0;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+  --border: #333333;
+  --border-light: #282828;
+  --accent: #4488ff;
+  --accent-hover: #5599ff;
+  --positive: #33aa33;
+  --negative: #ee3333;
+  --warning: #ddaa00;
+  --buy: #33aa33;
+  --sell: #ee3333;
+  --focus: #4488ff;
 }
 
 html, body, #root {

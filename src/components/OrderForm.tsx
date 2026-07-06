@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { OrderAction, OrderType, Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
 import { createOrder, validateOrderRisk, executeOrder, applyTradeToPortfolio } from '../lib/trading'

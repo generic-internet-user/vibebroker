@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import type { Watchlist, Quote } from '../types'
 import { useApp } from '../store/AppContext'
 import { saveWatchlist, deleteWatchlist } from '../db'

@@ -20,3 +20,5 @@ coverage/
 # editor
 .direnv/
 .envrc
+.swp
+.swo

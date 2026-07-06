@@ -38,7 +38,9 @@ export function PortfolioSidebar({ onRename, onClone, onArchive, onDelete, onFor
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
             <button className="btn-sm" onClick={() => onRename(p.id)} title="Rename">R</button>
             <button className="btn-sm" onClick={() => onClone(p.id)} title="Clone">C</button>
-            <button className="btn-sm" onClick={() => onFork(p.id)} title="Fork">F</button>
+            {state.settings.enableForking && (
+              <button className="btn-sm" onClick={() => onFork(p.id)} title="Fork">F</button>
+            )}
             <button className="btn-sm" onClick={() => onArchive(p.id)} title="Archive">A</button>
             <button className="btn-sm" onClick={() => onDelete(p.id)} title="Delete">X</button>
           </div>

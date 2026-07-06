@@ -1,6 +1,4 @@
-import React from 'react'
 import { Modal } from './Modals'
-import type { OrderAction } from '../types'
 
 interface Props {
   open: boolean
@@ -22,10 +20,10 @@ export function KeyboardShortcuts({ open, onClose }: Props) {
     <Modal open={open} onClose={onClose} title="Keyboard Shortcuts">
       <div className="shortcuts-grid">
         {shortcuts.map((s) => (
-          <React.Fragment key={s.key}>
+          <div key={s.key} style={{ display: 'contents' }}>
             <span className="key"><span className="key-hint">{s.key}</span></span>
             <span>{s.action}</span>
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </Modal>

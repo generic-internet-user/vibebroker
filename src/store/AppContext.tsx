@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react'
 import type { Portfolio, Watchlist, AppSettings, Quote, Order, Trade, PerformanceSnapshot } from '../types'
 import { getAllPortfolios, savePortfolio, deletePortfolio, getAllWatchlists, saveWatchlist, deleteWatchlist } from '../db'
 import { defaultPortfolioSettings } from '../lib/trading'

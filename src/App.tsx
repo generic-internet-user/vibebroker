@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useApp } from './store/AppContext'
 import { savePortfolio, deletePortfolio } from './db'
 import { Toolbar } from './components/Toolbar'
@@ -25,7 +25,7 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [newPortfolioName, setNewPortfolioName] = useState('')
   const [newPortfolioCurrency, setNewPortfolioCurrency] = useState('USD')
-  const [newPortfolioCash, setNewPortfolioCash] = useState('100000')
+  const [newPortfolioCash, setNewPortfolioCash] = useState('0')
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
   const [renameName, setRenameName] = useState('')
   const [undoWarning, setUndoWarning] = useState(false)
@@ -79,6 +79,20 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
+
+  useEffect(() => {
+    const theme = state.settings.theme
+    if (theme === 'dark') {
+      document.documentElement.style.setProperty('color-scheme', 'dark')
+      document.documentElement.classList.add('dark')
+    } else if (theme === 'light') {
+      document.documentElement.style.setProperty('color-scheme', 'light')
+      document.documentElement.classList.remove('dark')
+    } else {
+      document.documentElement.style.removeProperty('color-scheme')
+      document.documentElement.classList.remove('dark')
+    }
+  }, [state.settings.theme])
 
   const handleNewPortfolio = async () => {
     if (!newPortfolioName.trim()) return
