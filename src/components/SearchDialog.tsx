@@ -27,6 +27,18 @@ export function SearchDialog({ open, onClose }: Props) {
   }, [open])
 
   useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [open, onClose])
+
+  useEffect(() => {
     if (!query || query.length < 1) {
       setResults([])
       // Show local portfolio positions as default results

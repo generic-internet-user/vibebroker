@@ -80,11 +80,11 @@ export function FloatingPanel({
         let newX = d.startX
         let newY = d.startY
 
-        if (dir === 'se' || dir === 'sw' || dir === 'e' || dir === 'w') {
-          newW = dir === 'sw' || dir === 'w' ? d.startW - dw : d.startW + dw
+        if (dir === 'se' || dir === 'sw' || dir === 'e' || dir === 'w' || dir === 'ne' || dir === 'nw') {
+          newW = (dir === 'sw' || dir === 'w' || dir === 'nw') ? d.startW - dw : d.startW + dw
         }
-        if (dir === 'se' || dir === 'ne' || dir === 's' || dir === 'n') {
-          newH = dir === 'ne' || dir === 'n' ? d.startH - dh : d.startH + dh
+        if (dir === 'se' || dir === 'ne' || dir === 's' || dir === 'n' || dir === 'nw' || dir === 'sw') {
+          newH = (dir === 'ne' || dir === 'n' || dir === 'nw') ? d.startH - dh : d.startH + dh
         }
 
         newW = Math.max(MIN_W, newW)
@@ -92,14 +92,17 @@ export function FloatingPanel({
 
         const c = containerRef.current
         if (c) {
-          newW = Math.min(newW, c.clientWidth - d.startX)
-          newH = Math.min(newH, c.clientHeight - d.startY - 32)
+          const rightEdge = d.startX + d.startW
+          newW = Math.min(newW, c.clientWidth - (d.startX - (newW - d.startW)))
+          newH = Math.min(newH, c.clientHeight - (d.startY - (newH - d.startH)) - 32)
+          newW = Math.min(newW, c.clientWidth)
+          newH = Math.min(newH, c.clientHeight - 32)
         }
 
-        if (dir === 'sw' || dir === 'w') {
+        if (dir === 'sw' || dir === 'w' || dir === 'nw') {
           newX = d.startX - (newW - d.startW)
         }
-        if (dir === 'ne' || dir === 'n') {
+        if (dir === 'ne' || dir === 'n' || dir === 'nw') {
           newY = d.startY - (newH - d.startH)
         }
 
