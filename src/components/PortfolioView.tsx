@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { Portfolio, Order, Trade } from '../types'
-import { useApp } from '../store/AppContext'
-import { savePortfolio } from '../db'
-import * as marketData from '../lib/market-data'
+import { useApp } from '../store/AppContext''
 
 interface Props {
   portfolio: Portfolio
@@ -13,58 +11,16 @@ interface Props {
 export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
   const { state, dispatch } = useApp()
   const [activeTab, setActiveTab] = useState('positions')
-  const [notesText, setNotesText] = useState(portfolio.notes)
-
-  useEffect(() => {
-    setNotesText(portfolio.notes)
-  }, [portfolio.id, portfolio.notes])
-
-  const handleSaveNotes = async () => {
-    const updated = { ...portfolio, notes: notesText, updatedAt: Date.now() }
-    await savePortfolio(updated)
-    dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
-  }
-
-  const totalValue = portfolio.cashBalance + portfolio.positions.reduce((s, p) => {
-    const quote = state.quotes[p.symbol]
-    return s + (quote?.price || p.currentPrice) * p.quantity
-  }, 0)
-
-  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity, 0)
-  const totalPnL = totalValue - portfolio.cashBalance - totalInvested
-  const totalReturn = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
 
   return (
     <div className="flex flex-col" style={{ height: '100%' }}>
-      <div className="grid-3 mb-2">
-        <div className="stat">
-          <div className="label">Total Value</div>
-          <div className="value">${totalValue.toFixed(2)}</div>
-        </div>
-        <div className="stat">
-          <div className="label">Cash</div>
-          <div className="value" style={{ color: portfolio.cashBalance >= 0 ? 'var(--positive)' : 'var(--negative)' }}>
-            ${portfolio.cashBalance.toFixed(2)}
-          </div>
-        </div>
-        <div className="stat">
-          <div className="label">P&L</div>
-          <div className={`value ${totalPnL >= 0 ? 'text-positive' : 'text-negative'}`}>
-            ${totalPnL.toFixed(2)}
-          </div>
-          <div className={`change ${totalReturn >= 0 ? 'text-positive' : 'text-negative'}`}>
-            {totalReturn.toFixed(2)}%
-          </div>
-        </div>
-      </div>
-
       <div className="flex gap-2 mb-2">
         <button className="btn-positive" onClick={onBuy}>Buy <span className="key-hint">B</span></button>
         <button className="btn-negative" onClick={onSell}>Sell <span className="key-hint">S</span></button>
       </div>
 
       <div className="tab-bar">
-        {['positions', 'orders', 'history', 'performance', 'notes'].map(t => (
+        {['positions', 'orders', 'history', 'performance'].map(t => (
           <button
             key={t}
             className={`tab ${activeTab === t ? 'active' : ''}`}
@@ -79,7 +35,6 @@ export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
       {activeTab === 'orders' && <OrdersTab portfolio={portfolio} />}
       {activeTab === 'history' && <HistoryTab portfolio={portfolio} />}
       {activeTab === 'performance' && <PerformanceTab portfolio={portfolio} />}
-      {activeTab === 'notes' && <NotesTab portfolio={portfolio} notesText={notesText} setNotesText={setNotesText} onSave={handleSaveNotes} />}
     </div>
   )
 }
@@ -263,23 +218,4 @@ function PerformanceTab({ portfolio }: { portfolio: Portfolio }) {
   )
 }
 
-function NotesTab({ portfolio, notesText, setNotesText, onSave }: {
-  portfolio: Portfolio
-  notesText: string
-  setNotesText: (v: string) => void
-  onSave: () => void
-}) {
-  return (
-    <div className="flex flex-col gap-2 mt-2" style={{ height: '100%' }}>
-      <textarea
-        value={notesText}
-        onChange={(e) => setNotesText(e.target.value)}
-        style={{ width: '100%', minHeight: 200, flex: 1 }}
-        placeholder="Write your notes about this portfolio..."
-      />
-      <div className="flex gap-1">
-        <button className="btn-primary" onClick={onSave}>Save Notes</button>
-      </div>
-    </div>
-  )
-}
+

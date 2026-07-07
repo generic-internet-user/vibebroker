@@ -257,7 +257,7 @@ export interface UndoAction {
   undo: () => void
 }
 
-export type PanelType = 'chart' | 'positions' | 'orders' | 'history' | 'performance' | 'watchlists' | 'notes'
+export type PanelType = 'chart' | 'positions' | 'watchlists' | 'notes' | 'balance'
 
 export interface LayoutPanel {
   id: string

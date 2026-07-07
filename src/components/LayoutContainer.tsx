@@ -4,6 +4,8 @@ import { useApp } from '../store/AppContext'
 import { Chart } from './Chart'
 import { PortfolioView } from './PortfolioView'
 import { WatchlistsPanel } from './WatchlistsPanel'
+import { BalancePanel } from './BalancePanel'
+import { NotesPanel } from './NotesPanel'
 import { FloatingPanel } from './FloatingPanel'
 
 const PRESETS_KEY = 'vibebroker_layout_presets'
@@ -178,6 +180,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   }
 
   const panelComponents: Record<PanelType, (panel: LayoutPanel) => React.ReactNode> = {
+    balance: () => <BalancePanel portfolio={portfolio} />,
     chart: (panel) => (
       <Chart
         symbol={panel.symbol || (portfolio.positions[0]?.symbol || 'AAPL')}
@@ -188,10 +191,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
     ),
     watchlists: () => <WatchlistsPanel />,
     positions: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    orders: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    history: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    performance: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    notes: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    notes: () => <NotesPanel portfolio={portfolio} />,
   }
 
   return (
@@ -219,11 +219,9 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
           style={{ height: 24, fontSize: 12 }}
         >
           <option value="">+ Add Panel</option>
+          <option value="balance">Balance</option>
           <option value="chart">Chart</option>
-          <option value="positions">Positions</option>
-          <option value="orders">Orders</option>
-          <option value="history">History</option>
-          <option value="performance">Performance</option>
+          <option value="positions">Portfolio Status</option>
           <option value="watchlists">Watchlists</option>
           <option value="notes">Notes</option>
         </select>

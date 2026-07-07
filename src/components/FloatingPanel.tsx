@@ -2,11 +2,9 @@ import { useRef, useCallback, useState, useEffect, type ReactNode, type MouseEve
 import type { PanelType } from '../types'
 
 const PANEL_TYPES: { value: PanelType; label: string }[] = [
+  { value: 'balance', label: 'Balance' },
   { value: 'chart', label: 'Chart' },
-  { value: 'positions', label: 'Positions' },
-  { value: 'orders', label: 'Orders' },
-  { value: 'history', label: 'History' },
-  { value: 'performance', label: 'Performance' },
+  { value: 'positions', label: 'Portfolio Status' },
   { value: 'watchlists', label: 'Watchlists' },
   { value: 'notes', label: 'Notes' },
 ]
