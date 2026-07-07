@@ -777,6 +777,48 @@ button.btn-sm {
   position: relative;
 }
 
+.symbol-dropdown-wrapper {
+  position: relative;
+}
+
+.symbol-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  z-index: 10;
+  min-width: 160px;
+}
+
+.symbol-dropdown-menu input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg);
+  color: var(--text);
+  text-transform: uppercase;
+}
+
+.symbol-dropdown-menu input:focus {
+  outline: none;
+}
+
+.symbol-dropdown-item {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  color: var(--text);
+}
+
+.symbol-dropdown-item:hover {
+  background: var(--bg-secondary);
+}
+
 .indicator-dropdown-menu {
   position: absolute;
   top: 100%;

@@ -53,6 +53,14 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
   const [enabledIndicators, setEnabledIndicators] = useState<IndicatorType[]>([])
   const [indicatorParams, setIndicatorParams] = useState<Record<string, Record<string, number>>>({})
   const [showIndDropdown, setShowIndDropdown] = useState(false)
+  const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
+
+  useEffect(() => {
+    if (!showSymbolDropdown) return
+    const handler = () => setShowSymbolDropdown(false)
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showSymbolDropdown])
 
   useEffect(() => {
     if (!symbol || !containerRef.current) return
@@ -242,16 +250,61 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
     }
   }, [enabledIndicators, indicatorParams, data])
 
+  const [symbolSearch, setSymbolSearch] = useState('')
+
   const toggleIndicator = useCallback((type: IndicatorType) => {
     setEnabledIndicators(prev =>
       prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
     )
   }, [])
 
+  const portfolioSymbols = state.portfolios
+    .flatMap(p => p.positions)
+    .map(p => p.symbol)
+    .filter((s, i, a) => a.indexOf(s) === i)
+
+  const filteredSymbols = portfolioSymbols.filter(s =>
+    s.toLowerCase().includes(symbolSearch.toLowerCase())
+  )
+
   return (
     <div className="flex flex-col" style={{ height: '100%' }}>
       <div className="flex items-center gap-2 mb-1" style={{ minHeight: 28 }}>
-        <span className="font-bold">{symbol}</span>
+        <div className="symbol-dropdown-wrapper">
+          <button
+            className="btn-sm mono"
+            onClick={() => { setShowSymbolDropdown(v => !v); setSymbolSearch('') }}
+          >
+            {symbol} ▾
+          </button>
+          {showSymbolDropdown && (
+            <div className="symbol-dropdown-menu">
+              <input
+                type="text"
+                value={symbolSearch}
+                onChange={e => setSymbolSearch(e.target.value.toUpperCase())}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && symbolSearch.trim()) {
+                    onSymbolChange?.(symbolSearch.trim())
+                    setShowSymbolDropdown(false)
+                  }
+                }}
+                placeholder="Search symbol..."
+                autoFocus
+                onClick={e => e.stopPropagation()}
+              />
+              {filteredSymbols.map(s => (
+                <div
+                  key={s}
+                  className="symbol-dropdown-item"
+                  onClick={() => { onSymbolChange?.(s); setShowSymbolDropdown(false) }}
+                >
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex gap-1">
           {TIMEFRAMES.map(tf => (
             <button
@@ -262,16 +315,6 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
               {tf}
             </button>
           ))}
-        </div>
-        <div className="flex gap-1">
-          <input
-            type="text"
-            className="btn-sm"
-            value={symbol}
-            onChange={(e) => onSymbolChange?.(e.target.value.toUpperCase())}
-            placeholder="AAPL"
-            style={{ width: 80, height: 20, fontSize: 11, textTransform: 'uppercase' }}
-          />
         </div>
         <span className="spacer" />
         <div className="indicator-dropdown-wrapper">
