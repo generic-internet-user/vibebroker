@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { LayoutConfig, LayoutPanel, PanelType, Timeframe, Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
 import { Chart } from './Chart'
 import { PortfolioView } from './PortfolioView'
 import { WatchlistsPanel } from './WatchlistsPanel'
+import { FloatingPanel } from './FloatingPanel'
 
 const PRESETS_KEY = 'vibebroker_layout_presets'
 const CURRENT_KEY = 'vibebroker_layout_current'
@@ -39,8 +40,8 @@ function clearCurrentPanels() {
 }
 
 const DEFAULT_PANELS: LayoutPanel[] = [
-  { id: 'chart', type: 'chart', title: 'Chart', width: 1, height: 1 },
-  { id: 'positions', type: 'positions', title: 'Positions', width: 1, height: 1 },
+  { id: 'chart', type: 'chart', title: 'Chart', x: 0, y: 0, width: 600, height: 500 },
+  { id: 'positions', type: 'positions', title: 'Positions', x: 620, y: 0, width: 500, height: 500 },
 ]
 
 interface Props {
@@ -51,6 +52,7 @@ interface Props {
 
 export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   const { state, dispatch } = useApp()
+  const containerRef = useRef<HTMLDivElement>(null)
   const [presets, setPresets] = useState<LayoutConfig[]>(loadPresets)
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const [panels, setPanels] = useState<LayoutPanel[]>(() => {
@@ -58,7 +60,13 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   })
   const [showManage, setShowManage] = useState(false)
   const [presetName, setPresetName] = useState('')
-  const [chartTimeframes, setChartTimeframes] = useState<Record<string, any>>({})
+  const [chartTimeframes, setChartTimeframes] = useState<Record<string, Timeframe>>({})
+  const [zCounter, setZCounter] = useState(panels.length)
+  const [zMap, setZMap] = useState<Record<string, number>>(() => {
+    const m: Record<string, number> = {}
+    panels.forEach((p, i) => { m[p.id] = i + 1 })
+    return m
+  })
   const initialRender = useRef(true)
 
   useEffect(() => {
@@ -74,37 +82,64 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
       const preset = presets.find(p => p.id === activePreset)
       if (preset) {
         setPanels(preset.panels)
+        const m: Record<string, number> = {}
+        preset.panels.forEach((p, i) => { m[p.id] = i + 1 })
+        setZMap(m)
+        setZCounter(preset.panels.length)
       }
     }
   }, [activePreset, presets])
 
-  const addPanel = (type: PanelType) => {
+  const addPanel = useCallback((type: PanelType) => {
     const id = `panel_${Date.now()}`
+    const offset = panels.length * 30
     const newPanel: LayoutPanel = {
       id,
       type,
       title: type.charAt(0).toUpperCase() + type.slice(1),
-      width: 1,
-      height: 1,
+      x: 20 + offset,
+      y: 20 + offset,
+      width: 500,
+      height: 400,
     }
     setPanels(prev => [...prev, newPanel])
-  }
+    const n = zCounter + 1
+    setZCounter(n)
+    setZMap(prev => ({ ...prev, [id]: n }))
+  }, [panels.length, zCounter])
 
-  const removePanel = (id: string) => {
+  const removePanel = useCallback((id: string) => {
     setPanels(prev => prev.filter(p => p.id !== id))
-  }
+  }, [])
 
-  const changePanelType = (id: string, type: PanelType) => {
+  const changePanelType = useCallback((id: string, type: PanelType) => {
     setPanels(prev => prev.map(p =>
       p.id === id ? { ...p, type, title: type.charAt(0).toUpperCase() + type.slice(1) } : p
     ))
-  }
+  }, [])
 
-  const setPanelSymbol = (id: string, symbol: string) => {
+  const setPanelSymbol = useCallback((id: string, symbol: string) => {
     setPanels(prev => prev.map(p =>
       p.id === id ? { ...p, symbol: symbol.toUpperCase() } : p
     ))
-  }
+  }, [])
+
+  const movePanel = useCallback((id: string, x: number, y: number) => {
+    setPanels(prev => prev.map(p => p.id === id ? { ...p, x, y } : p))
+  }, [])
+
+  const resizePanel = useCallback((id: string, w: number, h: number) => {
+    setPanels(prev => prev.map(p => p.id === id ? { ...p, width: w, height: h } : p))
+  }, [])
+
+  const focusPanel = useCallback((id: string) => {
+    setZMap(prev => {
+      if (prev[id] === zCounter) return prev
+      const n = zCounter + 1
+      setZCounter(n)
+      return { ...prev, [id]: n }
+    })
+  }, [zCounter])
 
   const savePreset = () => {
     if (!presetName.trim()) return
@@ -133,21 +168,30 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
       setPanels(DEFAULT_PANELS)
       clearCurrentPanels()
       setActivePreset(null)
+      const m: Record<string, number> = {}
+      DEFAULT_PANELS.forEach((p, i) => { m[p.id] = i + 1 })
+      setZMap(m)
+      setZCounter(DEFAULT_PANELS.length)
       return
     }
     setActivePreset(id)
   }
 
-  const chartPanels = panels.filter(p => p.type === 'chart')
-  const nonChartPanels = panels.filter(p => p.type !== 'chart')
-  const panelComponents: Record<PanelType, React.ReactNode> = {
-    positions: <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    orders: <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    history: <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    performance: <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    notes: <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
-    chart: null,
-    watchlists: <WatchlistsPanel />,
+  const panelComponents: Record<PanelType, (panel: LayoutPanel) => React.ReactNode> = {
+    chart: (panel) => (
+      <Chart
+        symbol={panel.symbol || (portfolio.positions[0]?.symbol || 'AAPL')}
+        timeframe={chartTimeframes[panel.id] || '1M'}
+        onTimeframeChange={(tf) => setChartTimeframes(prev => ({ ...prev, [panel.id]: tf }))}
+        portfolioId={portfolio.id}
+      />
+    ),
+    watchlists: () => <WatchlistsPanel />,
+    positions: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    orders: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    history: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    performance: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    notes: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
   }
 
   return (
@@ -186,87 +230,31 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
         <button className="btn-sm" onClick={() => setShowManage(true)}>Save</button>
       </div>
 
-      <div className="flex-1" style={{ overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {chartPanels.length > 0 && (
-          <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
-            {chartPanels.map(panel => (
-              <div key={panel.id} className="panel" style={{ flex: 1, minWidth: 400, minHeight: 400 }}>
-                <div className="panel-header">
-                  <span>{panel.title}</span>
-                  <input
-                    type="text"
-                    className="btn-sm"
-                    value={panel.symbol || ''}
-                    onChange={(e) => setPanelSymbol(panel.id, e.target.value)}
-                    placeholder={portfolio.positions[0]?.symbol || 'AAPL'}
-                    style={{ width: 80, height: 20, fontSize: 11, textTransform: 'uppercase' }}
-                  />
-                  <div className="flex gap-1">
-                    <select
-                      value={panel.type}
-                      onChange={(e) => changePanelType(panel.id, e.target.value as PanelType)}
-                      style={{ height: 20, fontSize: 11 }}
-                    >
-                      <option value="chart">Chart</option>
-                      <option value="positions">Positions</option>
-                      <option value="orders">Orders</option>
-                      <option value="history">History</option>
-                      <option value="performance">Performance</option>
-                      <option value="watchlists">Watchlists</option>
-                      <option value="notes">Notes</option>
-                    </select>
-                    <button className="btn-sm" onClick={() => removePanel(panel.id)}>&times;</button>
-                  </div>
-                </div>
-                <div className="panel-body" style={{ padding: 0 }}>
-                  <Chart
-                    symbol={panel.symbol || (portfolio.positions[0]?.symbol || 'AAPL')}
-                    timeframe={chartTimeframes[panel.id] || '1M'}
-                    onTimeframeChange={(tf) => setChartTimeframes(prev => ({ ...prev, [panel.id]: tf }))}
-                    portfolioId={portfolio.id}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {nonChartPanels.length > 0 && (
-          <div className="grid-2 gap-2">
-            {nonChartPanels.map(panel => (
-              <div key={panel.id} className="panel">
-                <div className="panel-header">
-                  <span>{panel.title}</span>
-                  <div className="flex gap-1">
-                    <select
-                      value={panel.type}
-                      onChange={(e) => changePanelType(panel.id, e.target.value as PanelType)}
-                      style={{ height: 20, fontSize: 11 }}
-                    >
-                      <option value="chart">Chart</option>
-                      <option value="positions">Positions</option>
-                      <option value="orders">Orders</option>
-                      <option value="history">History</option>
-                      <option value="performance">Performance</option>
-                      <option value="watchlists">Watchlists</option>
-                      <option value="notes">Notes</option>
-                    </select>
-                    <button className="btn-sm" onClick={() => removePanel(panel.id)}>&times;</button>
-                  </div>
-                </div>
-                <div className="panel-body">
-                  {panel.type === 'watchlists' ? <WatchlistsPanel /> : (
-                    <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {panels.length === 0 && (
-          <div className="empty-state">No panels. Add one using the dropdown above.</div>
-        )}
+      <div
+        ref={containerRef}
+        className="layout-workspace"
+      >
+        {panels.map(panel => (
+          <FloatingPanel
+            key={panel.id}
+            id={panel.id}
+            title={panel.title}
+            type={panel.type}
+            x={panel.x}
+            y={panel.y}
+            width={panel.width}
+            height={panel.height}
+            zIndex={zMap[panel.id] || 1}
+            containerRef={containerRef}
+            onMove={movePanel}
+            onResize={resizePanel}
+            onChangeType={changePanelType}
+            onClose={removePanel}
+            onFocus={focusPanel}
+          >
+            {panelComponents[panel.type]?.(panel)}
+          </FloatingPanel>
+        ))}
       </div>
 
       {showManage && (

@@ -46,7 +46,7 @@ Future features and improvements planned for VibeBroker.
 
 ## UI
 
-- [ ] Resizable panels / modals
+- [x] Resizable panels / modals
 - [ ] News ticker / bottom bar widget (awaiting API integration)
 
 ## Nice-to-have

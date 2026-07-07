@@ -30,6 +30,12 @@ VibeBroker is a local-first paper trading web application. All data lives in the
 - Dispatch actions are defined in `src/store/AppContext.tsx`
 - Portfolio mutations must write to IndexedDB then update context
 
+## Development environment
+
+- Use `nix develop` to enter the devshell which provides node, npm, and other tools
+- All node/npm commands must be run inside the devshell — they will not work outside it
+- The devshell config is in `flake.nix` under `devShells.default`
+
 ## Adding features
 
 1. Check TODO.md first — if the feature is listed there, it's planned

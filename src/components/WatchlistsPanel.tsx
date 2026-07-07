@@ -87,12 +87,8 @@ export function WatchlistsPanel() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div className="panel-header">
-        <span>Watchlists</span>
-        <button className="btn-sm" onClick={() => setShowCreate(true)}>+</button>
-      </div>
-
-      <div className="flex gap-1 p-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
+      <div className="flex gap-1 p-2" style={{ borderBottom: '1px solid var(--border-light)', flexWrap: 'wrap' }}>
+        <button className="btn-sm" onClick={() => setShowCreate(true)} style={{ flexShrink: 0 }}>+</button>
         {state.watchlists.map(w => (
           <button
             key={w.id}

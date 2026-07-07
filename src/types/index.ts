@@ -264,9 +264,13 @@ export interface LayoutPanel {
   type: PanelType
   title: string
   symbol?: string
+  x: number
+  y: number
   width: number
   height: number
 }
+
+export const INDICATOR_COLORS = ['#4488ff', '#ff6d00', '#43a047', '#e53935', '#8e24aa', '#00acc1', '#ffb300', '#6d4c41']
 
 export interface LayoutConfig {
   id: string

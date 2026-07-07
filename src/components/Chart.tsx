@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { createChart, CandlestickSeries, LineSeries, LineStyle, type IChartApi, type ISeriesApi } from 'lightweight-charts'
-import type { OHLCV, Timeframe } from '../types'
+import type { OHLCV, Timeframe, IndicatorType } from '../types'
+import { INDICATOR_COLORS } from '../types'
 import { useApp } from '../store/AppContext'
 import * as marketData from '../lib/market-data'
 import { calculateIndicator } from '../lib/indicators'
@@ -28,8 +29,15 @@ const RANGE_MAP: Record<Timeframe, { from: number; to: number }> = {
   '1Y': { from: 365, to: 0 },
 }
 
+const INDICATOR_OPTIONS: IndicatorType[] = ['sma', 'ema', 'vwap', 'rsi', 'macd', 'bollinger', 'atr', 'stochastic']
+
 function resolveCSSVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888888'
+}
+
+let colorIndex = 0
+function nextColor(): string {
+  return INDICATOR_COLORS[colorIndex++ % INDICATOR_COLORS.length]
 }
 
 export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
@@ -41,8 +49,9 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
   const [data, setData] = useState<OHLCV[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [enabledIndicators, setEnabledIndicators] = useState<string[]>([])
+  const [enabledIndicators, setEnabledIndicators] = useState<IndicatorType[]>([])
   const [indicatorParams, setIndicatorParams] = useState<Record<string, Record<string, number>>>({})
+  const [showIndDropdown, setShowIndDropdown] = useState(false)
 
   useEffect(() => {
     if (!symbol || !containerRef.current) return
@@ -186,50 +195,54 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
 
     if (enabledIndicators.length === 0) return
 
-    const indicator = enabledIndicators[0]
-    const params = indicatorParams[indicator] || {}
-    const results = calculateIndicator(indicator as any, data, params)
-    if (results.length === 0) return
+    colorIndex = 0
 
-    const toTime = (r: typeof results[0]) => (r.timestamp / 1000) as any
+    for (const indicator of enabledIndicators) {
+      const params = indicatorParams[indicator] || {}
+      const results = calculateIndicator(indicator as any, data, params)
+      if (results.length === 0) continue
 
-    function addLine(key: string, color: string, data: { time: any; value: number }[], dashed = false) {
-      const series = chartRef.current!.addSeries(LineSeries, {
-        color,
-        lineWidth: 1,
-        lineStyle: dashed ? LineStyle.Dashed : LineStyle.Solid,
-        lastValueVisible: false,
-        priceLineVisible: false,
-      })
-      series.setData(data)
-      indicatorSeriesRef.current.set(key, series)
-    }
+      const color = nextColor()
+      const toTime = (r: typeof results[0]) => (r.timestamp / 1000) as any
 
-    const firstVal = results[0].value
-
-    if (typeof firstVal === 'number') {
-      addLine(indicator, '#4488ff', results.map(r => ({ time: toTime(r), value: r.value })))
-    } else if (firstVal.length === 3) {
-      if (indicator === 'bollinger') {
-        addLine('bollinger_mid', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
-        addLine('bollinger_upper', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })), true)
-        addLine('bollinger_lower', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })), true)
-      } else {
-        addLine('macd_line', '#2962FF', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })))
-        addLine('macd_signal', '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
-        addLine('macd_hist', '#43A047', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })))
+      function addLine(key: string, c: string, lineData: { time: any; value: number }[], dashed = false) {
+        const series = chartRef.current!.addSeries(LineSeries, {
+          color: c,
+          lineWidth: 1,
+          lineStyle: dashed ? LineStyle.Dashed : LineStyle.Solid,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        })
+        series.setData(lineData)
+        indicatorSeriesRef.current.set(key, series)
       }
-    } else if (firstVal.length === 2) {
-      addLine('stoch_k', '#2962FF', results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[0] })))
-      addLine('stoch_d', '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[1] })))
+
+      const firstVal = results[0].value
+
+      if (typeof firstVal === 'number') {
+        addLine(indicator, color, results.map(r => ({ time: toTime(r), value: r.value })))
+      } else if (firstVal.length === 3) {
+        if (indicator === 'bollinger') {
+          addLine(`${indicator}_mid_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
+          addLine(`${indicator}_upper_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })), true)
+          addLine(`${indicator}_lower_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })), true)
+        } else {
+          addLine(`${indicator}_line_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })))
+          addLine(`${indicator}_signal_${color}`, '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
+          addLine(`${indicator}_hist_${color}`, '#43A047', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })))
+        }
+      } else if (firstVal.length === 2) {
+        addLine(`${indicator}_k_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[0] })))
+        addLine(`${indicator}_d_${color}`, '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[1] })))
+      }
     }
   }, [enabledIndicators, indicatorParams, data])
 
-  const toggleIndicator = (type: string) => {
+  const toggleIndicator = useCallback((type: IndicatorType) => {
     setEnabledIndicators(prev =>
-      prev.includes(type) ? [] : [type]
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
     )
-  }
+  }, [])
 
   return (
     <div className="flex flex-col" style={{ height: '100%' }}>
@@ -247,17 +260,32 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
           ))}
         </div>
         <span className="spacer" />
-        <div className="flex gap-1">
-          {['sma', 'ema', 'vwap', 'rsi', 'macd', 'bollinger', 'atr', 'stochastic'].map(ind => (
-            <button
-              key={ind}
-              className={`btn-sm ${enabledIndicators.includes(ind) ? 'btn-primary' : ''}`}
-              onClick={() => toggleIndicator(ind)}
-              title={ind.toUpperCase()}
-            >
-              {ind.toUpperCase()}
-            </button>
-          ))}
+        <div className="indicator-dropdown-wrapper">
+          <button
+            className="btn-sm"
+            onClick={() => setShowIndDropdown(v => !v)}
+          >
+            Indicators{enabledIndicators.length > 0 ? ` (${enabledIndicators.length})` : ''} ▾
+          </button>
+          {showIndDropdown && (
+            <div className="indicator-dropdown-menu">
+              {INDICATOR_OPTIONS.map(ind => {
+                const idx = enabledIndicators.indexOf(ind)
+                const active = idx !== -1
+                const c = active ? INDICATOR_COLORS[idx % INDICATOR_COLORS.length] : undefined
+                return (
+                  <div
+                    key={ind}
+                    className={`indicator-dropdown-item${active ? ' active' : ''}`}
+                    onClick={() => { toggleIndicator(ind); setShowIndDropdown(false) }}
+                  >
+                    {active && <span className="indicator-color-dot" style={{ background: c }} />}
+                    {ind.toUpperCase()}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
