@@ -52,6 +52,14 @@ interface Props {
   onSell: () => void
 }
 
+const PANEL_LABELS: Record<PanelType, string> = {
+  balance: 'Balance',
+  chart: 'Chart',
+  positions: 'Portfolio Status',
+  watchlists: 'Watchlists',
+  notes: 'Notes',
+}
+
 export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   const { state, dispatch } = useApp()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -98,7 +106,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
     const newPanel: LayoutPanel = {
       id,
       type,
-      title: type.charAt(0).toUpperCase() + type.slice(1),
+      title: PANEL_LABELS[type],
       x: 20 + offset,
       y: 20 + offset,
       width: 500,
@@ -116,7 +124,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
 
   const changePanelType = useCallback((id: string, type: PanelType) => {
     setPanels(prev => prev.map(p =>
-      p.id === id ? { ...p, type, title: type.charAt(0).toUpperCase() + type.slice(1) } : p
+      p.id === id ? { ...p, type, title: PANEL_LABELS[type] } : p
     ))
   }, [])
 

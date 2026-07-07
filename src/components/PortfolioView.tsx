@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Portfolio, Order, Trade } from '../types'
-import { useApp } from '../store/AppContext''
+import { useApp } from '../store/AppContext'
 
 interface Props {
   portfolio: Portfolio

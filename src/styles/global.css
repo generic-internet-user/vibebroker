@@ -704,7 +704,6 @@ button.btn-sm {
 .floating-panel-body {
   flex: 1;
   overflow: auto;
-  padding: 8px;
 }
 
 .resize-handle {
@@ -816,4 +815,44 @@ button.btn-sm {
 
 .spacer {
   flex: 1;
+}
+
+.balance-panel {
+  container-type: size;
+  display: flex;
+  gap: 2cqw;
+  height: 100%;
+  padding: 2cqw;
+}
+
+.balance-stat {
+  border: 1px solid var(--border);
+  padding: 1.5cqw;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.balance-label {
+  font-size: 2.2cqw;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.balance-value {
+  font-size: 4cqw;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  line-height: 1.2;
+  margin-top: 0.5cqw;
+}
+
+.balance-change {
+  font-size: 2.4cqw;
+  font-family: var(--font-mono);
+  margin-top: 0.3cqw;
 }
