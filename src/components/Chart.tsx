@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createChart, CandlestickSeries, LineSeries, type IChartApi, type ISeriesApi } from 'lightweight-charts'
+import { createChart, CandlestickSeries, LineSeries, LineStyle, type IChartApi, type ISeriesApi } from 'lightweight-charts'
 import type { OHLCV, Timeframe } from '../types'
 import { useApp } from '../store/AppContext'
 import * as marketData from '../lib/market-data'
@@ -37,7 +37,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
-  const indicatorSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
+  const indicatorSeriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
   const [data, setData] = useState<OHLCV[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -96,7 +96,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
       chart.remove()
       chartRef.current = null
       candleSeriesRef.current = null
-      indicatorSeriesRef.current = null
+      indicatorSeriesRef.current.clear()
     }
   }, [symbol])
 
@@ -131,11 +131,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         wickDownColor: negative,
       })
     }
-    if (indicatorSeriesRef.current) {
-      indicatorSeriesRef.current.applyOptions({
-        color: '#4488ff',
-      })
-    }
+
   }, [state.settings.theme])
 
   useEffect(() => {
@@ -183,32 +179,49 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
   useEffect(() => {
     if (!candleSeriesRef.current || data.length === 0) return
 
-    if (indicatorSeriesRef.current) {
-      chartRef.current?.removeSeries(indicatorSeriesRef.current)
-      indicatorSeriesRef.current = null
+    for (const [, series] of indicatorSeriesRef.current) {
+      chartRef.current?.removeSeries(series)
+    }
+    indicatorSeriesRef.current.clear()
+
+    if (enabledIndicators.length === 0) return
+
+    const indicator = enabledIndicators[0]
+    const params = indicatorParams[indicator] || {}
+    const results = calculateIndicator(indicator as any, data, params)
+    if (results.length === 0) return
+
+    const toTime = (r: typeof results[0]) => (r.timestamp / 1000) as any
+
+    function addLine(key: string, color: string, data: { time: any; value: number }[], dashed = false) {
+      const series = chartRef.current!.addSeries(LineSeries, {
+        color,
+        lineWidth: 1,
+        lineStyle: dashed ? LineStyle.Dashed : LineStyle.Solid,
+        lastValueVisible: false,
+        priceLineVisible: false,
+      })
+      series.setData(data)
+      indicatorSeriesRef.current.set(key, series)
     }
 
-    if (enabledIndicators.length > 0) {
-      const indicator = enabledIndicators[0]
-      const params = indicatorParams[indicator] || {}
-      const results = calculateIndicator(indicator as any, data, params)
+    const firstVal = results[0].value
 
-      if (results.length > 0) {
-        const lineSeries = chartRef.current!.addSeries(LineSeries, {
-          color: '#4488ff',
-          lineWidth: 1,
-          lastValueVisible: false,
-          priceLineVisible: false,
-        })
-        indicatorSeriesRef.current = lineSeries
-
-        lineSeries.setData(
-          results.map(r => ({
-            time: (r.timestamp / 1000) as any,
-            value: typeof r.value === 'number' ? r.value : (r.value as [number, number])[0],
-          }))
-        )
+    if (typeof firstVal === 'number') {
+      addLine(indicator, '#4488ff', results.map(r => ({ time: toTime(r), value: r.value })))
+    } else if (firstVal.length === 3) {
+      if (indicator === 'bollinger') {
+        addLine('bollinger_mid', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
+        addLine('bollinger_upper', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })), true)
+        addLine('bollinger_lower', '#4488ff', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })), true)
+      } else {
+        addLine('macd_line', '#2962FF', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[0] })))
+        addLine('macd_signal', '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))
+        addLine('macd_hist', '#43A047', results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[2] })))
       }
+    } else if (firstVal.length === 2) {
+      addLine('stoch_k', '#2962FF', results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[0] })))
+      addLine('stoch_d', '#FF6D00', results.map(r => ({ time: toTime(r), value: (r.value as [number, number])[1] })))
     }
   }, [enabledIndicators, indicatorParams, data])
 
