@@ -11,6 +11,7 @@ interface Props {
   portfolioId?: string
   timeframe: Timeframe
   onTimeframeChange?: (tf: Timeframe) => void
+  onSymbolChange?: (symbol: string) => void
 }
 
 const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '1Y']
@@ -261,6 +262,16 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
               {tf}
             </button>
           ))}
+        </div>
+        <div className="flex gap-1">
+          <input
+            type="text"
+            className="btn-sm"
+            value={symbol}
+            onChange={(e) => onSymbolChange?.(e.target.value.toUpperCase())}
+            placeholder="AAPL"
+            style={{ width: 80, height: 20, fontSize: 11, textTransform: 'uppercase' }}
+          />
         </div>
         <span className="spacer" />
         <div className="indicator-dropdown-wrapper">

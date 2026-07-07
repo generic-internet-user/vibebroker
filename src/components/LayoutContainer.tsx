@@ -194,6 +194,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
         symbol={panel.symbol || (portfolio.positions[0]?.symbol || 'AAPL')}
         timeframe={chartTimeframes[panel.id] || '1M'}
         onTimeframeChange={(tf) => setChartTimeframes(prev => ({ ...prev, [panel.id]: tf }))}
+        onSymbolChange={(s) => setPanelSymbol(panel.id, s)}
         portfolioId={portfolio.id}
       />
     ),
