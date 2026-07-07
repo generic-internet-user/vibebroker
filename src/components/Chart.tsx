@@ -58,7 +58,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height: 400,
+      height: containerRef.current.clientHeight,
       layout: {
         background: { color: 'transparent' },
         textColor: resolveCSSVar('--text-secondary'),
@@ -93,15 +93,18 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
     })
     candleSeriesRef.current = candleSeries
 
-    const handleResize = () => {
-      if (containerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({ width: containerRef.current.clientWidth })
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        if (chartRef.current) {
+          chartRef.current.applyOptions({ width, height })
+        }
       }
-    }
-    window.addEventListener('resize', handleResize)
+    })
+    ro.observe(containerRef.current)
 
     return () => {
-      window.removeEventListener('resize', handleResize)
+      ro.disconnect()
       chart.remove()
       chartRef.current = null
       candleSeriesRef.current = null

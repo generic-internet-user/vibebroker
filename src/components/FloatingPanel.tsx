@@ -14,6 +14,17 @@ const PANEL_TYPES: { value: PanelType; label: string }[] = [
 const MIN_W = 300
 const MIN_H = 200
 
+interface DragState {
+  mode: 'idle' | 'drag' | 'resize'
+  resizeDir: string
+  startMX: number
+  startMY: number
+  startX: number
+  startY: number
+  startW: number
+  startH: number
+}
+
 interface Props {
   id: string
   title: string
@@ -37,94 +48,70 @@ export function FloatingPanel({
   children, onMove, onResize, onChangeType, onClose, onFocus, containerRef,
 }: Props) {
   const [showTypeMenu, setShowTypeMenu] = useState(false)
-  const dragRef = useRef<{
-    active: boolean
-    resizing: boolean
-    dir: string
-    mx: number
-    my: number
-    sx: number
-    sy: number
-    px: number
-    py: number
-    pw: number
-    ph: number
-  }>({
-    active: false,
-    resizing: false,
-    dir: '',
-    mx: 0, my: 0, sx: 0, sy: 0,
-    px: 0, py: 0, pw: 0, ph: 0,
+  const [dragState, setDragState] = useState<DragState>({
+    mode: 'idle', resizeDir: '',
+    startMX: 0, startMY: 0, startX: 0, startY: 0, startW: 0, startH: 0,
   })
-
-  const clampPosition = useCallback((nx: number, ny: number) => {
-    const c = containerRef.current
-    if (!c) return { x: nx, y: ny }
-    return {
-      x: Math.max(0, Math.min(nx, c.clientWidth - MIN_W)),
-      y: Math.max(0, Math.min(ny, c.clientHeight - 32)),
-    }
-  }, [containerRef])
-
-  const clampSize = useCallback((w: number, h: number, cx: number, cy: number) => {
-    const c = containerRef.current
-    if (!c) return { w, h }
-    return {
-      w: Math.max(MIN_W, Math.min(w, c.clientWidth - cx)),
-      h: Math.max(MIN_H, Math.min(h, c.clientHeight - cy - 32)),
-    }
-  }, [containerRef])
+  const dragRef = useRef(dragState)
+  dragRef.current = dragState
 
   useEffect(() => {
+    if (dragState.mode === 'idle') return
+
     const d = dragRef.current
-    if (!d.active && !d.resizing) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (d.active) {
-        const dx = e.clientX - d.mx
-        const dy = e.clientY - d.my
-        const clamped = clampPosition(d.px + dx, d.py + dy)
-        onMove(id, clamped.x, clamped.y)
-      }
-      if (d.resizing) {
-        let dw = e.clientX - d.mx
-        let dh = e.clientY - d.my
-        let newW = d.pw + (d.dir === 'sw' || d.dir === 'nw' ? -dw : dw)
-        let newH = d.ph + (d.dir === 'ne' || d.dir === 'nw' ? -dh : dh)
-        let cx = d.px
-        let cy = d.py
-        if (d.dir === 'sw' || d.dir === 'nw') {
-          const c = containerRef.current
-          const maxW = c ? c.clientWidth - d.px : newW
-          const clampedW = Math.max(MIN_W, Math.min(newW, maxW))
-          const actualDx = d.pw - clampedW
-          cx = d.px - actualDx
-          newW = clampedW
+      if (d.mode === 'drag') {
+        const dx = e.clientX - d.startMX
+        const dy = e.clientY - d.startMY
+        const c = containerRef.current
+        let nx = d.startX + dx
+        let ny = d.startY + dy
+        if (c) {
+          nx = Math.max(0, Math.min(nx, c.clientWidth - MIN_W))
+          ny = Math.max(0, Math.min(ny, c.clientHeight - 32))
         }
-        if (d.dir === 'ne' || d.dir === 'nw') {
-          const c = containerRef.current
-          const maxH = c ? c.clientHeight - d.py - 32 : newH
-          const clampedH = Math.max(MIN_H, Math.min(newH, maxH))
-          const actualDy = d.ph - clampedH
-          cy = d.py - actualDy
-          newH = clampedH
+        onMove(id, nx, ny)
+      } else if (d.mode === 'resize') {
+        const dw = e.clientX - d.startMX
+        const dh = e.clientY - d.startMY
+        const dir = d.resizeDir
+
+        let newW = d.startW
+        let newH = d.startH
+        let newX = d.startX
+        let newY = d.startY
+
+        if (dir === 'se' || dir === 'sw' || dir === 'e' || dir === 'w') {
+          newW = dir === 'sw' || dir === 'w' ? d.startW - dw : d.startW + dw
         }
-        const clamped = clampSize(newW, newH, cx, cy)
-        if (d.dir === 'sw' || d.dir === 'nw') {
-          onMove(id, cx, d.py)
+        if (dir === 'se' || dir === 'ne' || dir === 's' || dir === 'n') {
+          newH = dir === 'ne' || dir === 'n' ? d.startH - dh : d.startH + dh
         }
-        if (d.dir === 'ne' || d.dir === 'nw') {
-          onMove(id, d.px, cy)
+
+        newW = Math.max(MIN_W, newW)
+        newH = Math.max(MIN_H, newH)
+
+        const c = containerRef.current
+        if (c) {
+          newW = Math.min(newW, c.clientWidth - d.startX)
+          newH = Math.min(newH, c.clientHeight - d.startY - 32)
         }
-        onResize(id, clamped.w, clamped.h)
+
+        if (dir === 'sw' || dir === 'w') {
+          newX = d.startX - (newW - d.startW)
+        }
+        if (dir === 'ne' || dir === 'n') {
+          newY = d.startY - (newH - d.startH)
+        }
+
+        onMove(id, newX, newY)
+        onResize(id, newW, newH)
       }
     }
 
     const handleMouseUp = () => {
-      d.active = false
-      d.resizing = false
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
+      setDragState({ mode: 'idle', resizeDir: '', startMX: 0, startMY: 0, startX: 0, startY: 0, startW: 0, startH: 0 })
     }
 
     document.addEventListener('mousemove', handleMouseMove)
@@ -133,33 +120,23 @@ export function FloatingPanel({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [id, x, y, width, height, onMove, onResize, clampPosition, clampSize, containerRef])
+  }, [dragState.mode, id, onMove, onResize, containerRef])
 
   const onHeaderMouseDown = (e: ReactMouseEvent) => {
     e.preventDefault()
     onFocus(id)
-    const d = dragRef.current
-    d.active = true
-    d.resizing = false
-    d.mx = e.clientX
-    d.my = e.clientY
-    d.px = x
-    d.py = y
+    setDragState({ mode: 'drag', resizeDir: '', startMX: e.clientX, startMY: e.clientY, startX: x, startY: y, startW: width, startH: height })
   }
 
   const onResizeMouseDown = (dir: string) => (e: ReactMouseEvent) => {
     e.preventDefault()
     onFocus(id)
-    const d = dragRef.current
-    d.active = false
-    d.resizing = true
-    d.dir = dir
-    d.mx = e.clientX
-    d.my = e.clientY
-    d.px = x
-    d.py = y
-    d.pw = width
-    d.ph = height
+    setDragState({ mode: 'resize', resizeDir: dir, startMX: e.clientX, startMY: e.clientY, startX: x, startY: y, startW: width, startH: height })
+  }
+
+  const handleTitleClick = (e: ReactMouseEvent) => {
+    e.stopPropagation()
+    setShowTypeMenu(v => !v)
   }
 
   return (
@@ -170,11 +147,7 @@ export function FloatingPanel({
     >
       <div className="floating-panel-header" onMouseDown={onHeaderMouseDown}>
         <div className="floating-panel-title-group">
-          <span
-            className="floating-panel-title"
-            onClick={(e) => { e.stopPropagation(); setShowTypeMenu(v => !v) }}
-            onMouseDown={e => e.stopPropagation()}
-          >
+          <span className="floating-panel-title" onClick={handleTitleClick}>
             {title} ▾
           </span>
           {showTypeMenu && (
@@ -200,6 +173,10 @@ export function FloatingPanel({
       <div className="resize-handle sw" onMouseDown={onResizeMouseDown('sw')} />
       <div className="resize-handle ne" onMouseDown={onResizeMouseDown('ne')} />
       <div className="resize-handle nw" onMouseDown={onResizeMouseDown('nw')} />
+      <div className="resize-handle n" onMouseDown={onResizeMouseDown('n')} />
+      <div className="resize-handle s" onMouseDown={onResizeMouseDown('s')} />
+      <div className="resize-handle e" onMouseDown={onResizeMouseDown('e')} />
+      <div className="resize-handle w" onMouseDown={onResizeMouseDown('w')} />
     </div>
   )
 }

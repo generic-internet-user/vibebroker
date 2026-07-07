@@ -197,17 +197,17 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   return (
     <div className="flex flex-col" style={{ height: '100%' }}>
       <div className="flex items-center gap-1 mb-1" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: 4, minHeight: 28, flexWrap: 'wrap' }}>
-        <span className="text-sm text-muted" style={{ marginRight: 4 }}>Layout:</span>
-        <button className={`btn-sm ${!activePreset ? 'btn-primary' : ''}`} onClick={() => handleSetPreset(null)}>Default</button>
-        {presets.map(p => (
-          <button
-            key={p.id}
-            className={`btn-sm ${activePreset === p.id ? 'btn-primary' : ''}`}
-            onClick={() => handleSetPreset(p.id)}
-          >
-            {p.name}
-          </button>
-        ))}
+        <select
+          className="btn-sm"
+          value={activePreset || ''}
+          onChange={(e) => handleSetPreset(e.target.value || null)}
+          style={{ height: 24, fontSize: 12 }}
+        >
+          <option value="">Default Layout</option>
+          {presets.map(p => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
         <span className="spacer" />
         <select
           className="btn-sm"
