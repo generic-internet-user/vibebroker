@@ -14,20 +14,15 @@ interface Props {
   onSymbolChange?: (symbol: string) => void
 }
 
-const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '1Y']
-const RESOLUTION_MAP: Record<Timeframe, string> = {
+const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '1Y', 'YTD', 'ALL']
+const RESOLUTION_MAP: Record<string, string> = {
   '1D': '5',
   '1W': '30',
   '1M': '60',
   '3M': 'D',
   '1Y': 'D',
-}
-const RANGE_MAP: Record<Timeframe, { from: number; to: number }> = {
-  '1D': { from: 1, to: 0 },
-  '1W': { from: 7, to: 0 },
-  '1M': { from: 30, to: 0 },
-  '3M': { from: 90, to: 0 },
-  '1Y': { from: 365, to: 0 },
+  'YTD': 'D',
+  'ALL': 'D',
 }
 
 const INDICATOR_OPTIONS: IndicatorType[] = ['sma', 'ema', 'vwap', 'rsi', 'macd', 'bollinger', 'atr', 'stochastic']
@@ -87,8 +82,8 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         timeVisible: true,
         secondsVisible: false,
       },
-      handleScroll: false,
-      handleScale: false,
+      handleScroll: true,
+      handleScale: true,
     })
 
     chartRef.current = chart
@@ -107,6 +102,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
         const { width, height } = entry.contentRect
         if (chartRef.current) {
           chartRef.current.applyOptions({ width, height })
+          chartRef.current.timeScale().fitContent()
         }
       }
     })
@@ -163,12 +159,19 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
     const fetchData = async () => {
       try {
         const now = Math.floor(Date.now() / 1000)
-        const range = RANGE_MAP[timeframe]
-        const from = now - range.from * 86400
-        const to = now - range.to * 86400
+        let from: number
         const resolution = RESOLUTION_MAP[timeframe]
+        if (timeframe === 'ALL') {
+          from = 946684800 // Jan 1, 2000
+        } else if (timeframe === 'YTD') {
+          const d = new Date()
+          from = Math.floor(new Date(d.getFullYear(), 0, 1).getTime() / 1000)
+        } else {
+          const range = { '1D': 1, '1W': 7, '1M': 30, '3M': 90, '1Y': 365 }[timeframe] || 365
+          from = now - range * 86400
+        }
 
-        const candles = await marketData.getCandles(symbol, resolution, from, to)
+        const candles = await marketData.getCandles(symbol, resolution, from, now)
         setData(candles)
         setLoading(false)
         setError(candles.length === 0 ? `No candle data for ${symbol}` : null)
@@ -291,13 +294,13 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
                 }}
                 placeholder="Search symbol..."
                 autoFocus
-                onClick={e => e.stopPropagation()}
+                onMouseDown={e => e.stopPropagation()}
               />
               {filteredSymbols.map(s => (
                 <div
                   key={s}
                   className="symbol-dropdown-item"
-                  onClick={() => { onSymbolChange?.(s); setShowSymbolDropdown(false) }}
+                  onMouseDown={e => { e.stopPropagation(); onSymbolChange?.(s); setShowSymbolDropdown(false) }}
                 >
                   {s}
                 </div>

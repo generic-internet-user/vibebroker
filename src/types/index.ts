@@ -278,7 +278,7 @@ export interface LayoutConfig {
   panels: LayoutPanel[]
 }
 
-export type Timeframe = '1D' | '1W' | '1M' | '3M' | '1Y'
+export type Timeframe = '1D' | '1W' | '1M' | '3M' | '1Y' | 'YTD' | 'ALL'
 
 export interface SearchResult {
   type: 'symbol' | 'company' | 'trade' | 'watchlist' | 'portfolio'
