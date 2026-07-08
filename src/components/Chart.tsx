@@ -52,7 +52,11 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
 
   useEffect(() => {
     if (!showSymbolDropdown) return
-    const handler = () => setShowSymbolDropdown(false)
+    const handler = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.symbol-dropdown-wrapper')) {
+        setShowSymbolDropdown(false)
+      }
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showSymbolDropdown])
@@ -294,13 +298,12 @@ export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
                 }}
                 placeholder="Search symbol..."
                 autoFocus
-                onMouseDown={e => e.stopPropagation()}
               />
               {filteredSymbols.map(s => (
                 <div
                   key={s}
                   className="symbol-dropdown-item"
-                  onMouseDown={e => { e.stopPropagation(); onSymbolChange?.(s); setShowSymbolDropdown(false) }}
+                  onClick={() => { onSymbolChange?.(s); setShowSymbolDropdown(false) }}
                 >
                   {s}
                 </div>
