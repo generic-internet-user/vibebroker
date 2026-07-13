@@ -36,7 +36,7 @@ function nextColor(): string {
   return INDICATOR_COLORS[colorIndex++ % INDICATOR_COLORS.length]
 }
 
-export function Chart({ symbol, timeframe, onTimeframeChange }: Props) {
+export function Chart({ symbol, timeframe, onTimeframeChange, onSymbolChange }: Props) {
   const { state } = useApp()
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
