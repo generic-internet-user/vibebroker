@@ -1,4 +1,4 @@
-import type { Quote, OHLCV, Asset } from '../../types'
+import type { Quote, OHLCV, Asset, EarningsEvent, EconomicEvent } from '../../types'
 
 const BASE_URL = 'https://finnhub.io/api/v1'
 
@@ -87,5 +87,47 @@ export async function searchSymbol(query: string): Promise<Asset[]> {
     exchange: r.exchange || '',
     currency: 'USD',
     type: r.type === 'ETF' ? 'etf' : 'stock',
+  }))
+}
+
+export async function getEarningsCalendar(from: string, to: string): Promise<EarningsEvent[]> {
+  const key = getKey()
+  if (!key) throw new Error('Finnhub API key not configured')
+
+  const res = await fetch(`${BASE_URL}/calendar/earnings?from=${from}&to=${to}&token=${key}`)
+  if (!res.ok) throw new Error(`Finnhub earnings calendar error: ${res.status}`)
+
+  const data = await res.json()
+  return (data.earningsCalendar || []).map((e: any): EarningsEvent => ({
+    date: e.date,
+    symbol: e.symbol,
+    epsEstimate: e.epsEstimate ?? null,
+    epsActual: e.epsActual ?? null,
+    revenueEstimate: e.revenueEstimate ?? null,
+    revenueActual: e.revenueActual ?? null,
+    hour: e.hour || 'dmh',
+    quarter: e.quarter ?? null,
+    year: e.year ?? null,
+  }))
+}
+
+export async function getEconomicCalendar(from: string, to: string): Promise<EconomicEvent[]> {
+  const key = getKey()
+  if (!key) throw new Error('Finnhub API key not configured')
+
+  const res = await fetch(`${BASE_URL}/calendar/economic?from=${from}&to=${to}&token=${key}`)
+  if (!res.ok) throw new Error(`Finnhub economic calendar error: ${res.status}`)
+
+  const data = await res.json()
+  return (data.economicCalendar || []).map((e: any): EconomicEvent => ({
+    date: e.date,
+    event: e.event,
+    country: e.country || '',
+    impact: (e.impact || 'low').toLowerCase(),
+    period: e.period || '',
+    source: e.source || '',
+    actual: e.actual ?? null,
+    consensus: e.consensus ?? null,
+    previous: e.previous ?? null,
   }))
 }

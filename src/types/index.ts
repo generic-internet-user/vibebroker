@@ -217,6 +217,7 @@ export interface AppSettings {
   finnhubApiKey: string
   twelveDataApiKey: string
   exchangeRateApiKey: string
+  fmpApiKey: string
   enableForking: boolean
   enableUndoRedo: boolean
   undoWarningEnabled: boolean
@@ -257,7 +258,7 @@ export interface UndoAction {
   undo: () => void
 }
 
-export type PanelType = 'chart' | 'positions' | 'watchlists' | 'notes' | 'balance'
+export type PanelType = 'chart' | 'positions' | 'watchlists' | 'notes' | 'balance' | 'calendar'
 
 export interface LayoutPanel {
   id: string
@@ -286,4 +287,30 @@ export interface SearchResult {
   description: string
   id: string
   action: () => void
+}
+
+export interface EarningsEvent {
+  date: string
+  symbol: string
+  epsEstimate: number | null
+  epsActual: number | null
+  revenueEstimate: number | null
+  revenueActual: number | null
+  hour: 'bmo' | 'amc' | 'dmh' | string
+  quarter: number | null
+  year: number | null
+}
+
+export type EconomicImpact = 'high' | 'medium' | 'low' | string
+
+export interface EconomicEvent {
+  date: string
+  event: string
+  country: string
+  impact: EconomicImpact
+  period: string
+  source: string
+  actual: number | null
+  consensus: number | null
+  previous: number | null
 }

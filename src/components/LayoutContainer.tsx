@@ -6,10 +6,19 @@ import { PortfolioView } from './PortfolioView'
 import { WatchlistsPanel } from './WatchlistsPanel'
 import { BalancePanel } from './BalancePanel'
 import { NotesPanel } from './NotesPanel'
+import { CalendarPanel } from './CalendarPanel'
 import { FloatingPanel } from './FloatingPanel'
+import {
+  getMonitorSignature,
+  getMonitorLabel,
+  loadLayoutForMonitor,
+  saveLayoutForMonitor,
+  clearLayoutForMonitor,
+  clampPanels,
+  migrateLegacyLayout,
+} from '../lib/multiMonitor'
 
 const PRESETS_KEY = 'vibebroker_layout_presets'
-const CURRENT_KEY = 'vibebroker_layout_current'
 
 function loadPresets(): LayoutConfig[] {
   try {
@@ -24,26 +33,13 @@ function savePresets(presets: LayoutConfig[]) {
   localStorage.setItem(PRESETS_KEY, JSON.stringify(presets))
 }
 
-function loadCurrentPanels(): LayoutPanel[] | null {
-  try {
-    const saved = localStorage.getItem(CURRENT_KEY)
-    return saved ? JSON.parse(saved) : null
-  } catch {
-    return null
-  }
-}
-
-function saveCurrentPanels(panels: LayoutPanel[]) {
-  localStorage.setItem(CURRENT_KEY, JSON.stringify(panels))
-}
-
-function clearCurrentPanels() {
-  localStorage.removeItem(CURRENT_KEY)
+function initialPanels(sig: string): LayoutPanel[] {
+  return clampPanels(migrateLegacyLayout() ?? loadLayoutForMonitor(sig) ?? DEFAULT_PANELS)
 }
 
 const DEFAULT_PANELS: LayoutPanel[] = [
   { id: 'chart', type: 'chart', title: 'Chart', x: 0, y: 0, width: 600, height: 500 },
-  { id: 'positions', type: 'positions', title: 'Positions', x: 620, y: 0, width: 500, height: 500 },
+  { id: 'positions', type: 'positions', title: 'Portfolio Status', x: 620, y: 0, width: 500, height: 500 },
 ]
 
 interface Props {
@@ -58,6 +54,7 @@ const PANEL_LABELS: Record<PanelType, string> = {
   positions: 'Portfolio Status',
   watchlists: 'Watchlists',
   notes: 'Notes',
+  calendar: 'Calendar',
 }
 
 export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
@@ -65,9 +62,9 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [presets, setPresets] = useState<LayoutConfig[]>(loadPresets)
   const [activePreset, setActivePreset] = useState<string | null>(null)
-  const [panels, setPanels] = useState<LayoutPanel[]>(() => {
-    return loadCurrentPanels() ?? DEFAULT_PANELS
-  })
+  const [monitorSig, setMonitorSig] = useState<string>(getMonitorSignature())
+  const sigRef = useRef(monitorSig)
+  const [panels, setPanels] = useState<LayoutPanel[]>(() => initialPanels(getMonitorSignature()))
   const [showManage, setShowManage] = useState(false)
   const [presetName, setPresetName] = useState('')
   const [chartTimeframes, setChartTimeframes] = useState<Record<string, Timeframe>>({})
@@ -84,8 +81,31 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
       initialRender.current = false
       return
     }
-    saveCurrentPanels(panels)
-  }, [panels])
+    saveLayoutForMonitor(monitorSig, panels)
+  }, [panels, monitorSig])
+
+  useEffect(() => {
+    const checkMonitor = () => {
+      const sig = getMonitorSignature()
+      if (sigRef.current === sig) return
+      sigRef.current = sig
+      setMonitorSig(sig)
+      const next = initialPanels(sig)
+      setPanels(next)
+      const m: Record<string, number> = {}
+      next.forEach((p, i) => { m[p.id] = i + 1 })
+      setZMap(m)
+      setZCounter(next.length)
+      setActivePreset(null)
+    }
+    const events: (keyof WindowEventMap)[] = ['resize', 'focus']
+    events.forEach((e) => window.addEventListener(e, checkMonitor))
+    document.addEventListener('visibilitychange', checkMonitor)
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, checkMonitor))
+      document.removeEventListener('visibilitychange', checkMonitor)
+    }
+  }, [])
 
   useEffect(() => {
     if (activePreset) {
@@ -173,15 +193,20 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
     if (activePreset === id) setActivePreset(null)
   }
 
+  const resetLayout = () => {
+    clearLayoutForMonitor(monitorSig)
+    const next = clampPanels(DEFAULT_PANELS)
+    setPanels(next)
+    setActivePreset(null)
+    const m: Record<string, number> = {}
+    next.forEach((p, i) => { m[p.id] = i + 1 })
+    setZMap(m)
+    setZCounter(next.length)
+  }
+
   const handleSetPreset = (id: string | null) => {
     if (!id) {
-      setPanels(DEFAULT_PANELS)
-      clearCurrentPanels()
-      setActivePreset(null)
-      const m: Record<string, number> = {}
-      DEFAULT_PANELS.forEach((p, i) => { m[p.id] = i + 1 })
-      setZMap(m)
-      setZCounter(DEFAULT_PANELS.length)
+      resetLayout()
       return
     }
     setActivePreset(id)
@@ -201,6 +226,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
     watchlists: () => <WatchlistsPanel />,
     positions: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
     notes: () => <NotesPanel portfolio={portfolio} />,
+    calendar: () => <CalendarPanel />,
   }
 
   return (
@@ -233,8 +259,13 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
           <option value="positions">Portfolio Status</option>
           <option value="watchlists">Watchlists</option>
           <option value="notes">Notes</option>
+          <option value="calendar">Calendar</option>
         </select>
         <button className="btn-sm" onClick={() => setShowManage(true)}>Save</button>
+        <button className="btn-sm" onClick={resetLayout} title="Reset layout for this monitor">Reset</button>
+        <span className="text-sm text-muted" title="Layout is saved per monitor; undocking restores a default layout">
+          {getMonitorLabel(monitorSig)}
+        </span>
       </div>
 
       <div

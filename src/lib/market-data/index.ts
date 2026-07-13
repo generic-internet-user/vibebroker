@@ -1,6 +1,6 @@
-import type { Quote, OHLCV, Asset } from '../../types'
+import type { Quote, OHLCV, Asset, EarningsEvent, EconomicEvent } from '../../types'
 import type { Provider, UseCase } from './registry'
-import { PROVIDERS, DEFAULT_PRIORITY } from './registry'
+import { PROVIDERS, DEFAULT_PRIORITY, type ProviderApi } from './registry'
 import * as twelvedata from './twelvedata'
 
 function getPriority(useCase: UseCase): Provider[] {
@@ -18,9 +18,12 @@ function getPriority(useCase: UseCase): Provider[] {
 
 async function tryProviders<T>(
   useCase: UseCase,
-  call: (provider: Provider) => Promise<T>
+  capability: keyof ProviderApi,
+  call: (provider: Provider) => Promise<T>,
 ): Promise<T> {
-  const providers = getPriority(useCase)
+  const providers = getPriority(useCase).filter(
+    (p) => typeof (PROVIDERS[p] as Record<string, unknown>)[capability as string] === 'function'
+  )
   let lastError: unknown
 
   for (const p of providers) {
@@ -35,13 +38,13 @@ async function tryProviders<T>(
 }
 
 export async function getQuote(symbol: string): Promise<Quote> {
-  return tryProviders('quote',
+  return tryProviders('quote', 'getQuote',
     (p) => PROVIDERS[p].getQuote!(symbol)
   )
 }
 
 export async function getProfile(symbol: string): Promise<Asset | null> {
-  return tryProviders('profile',
+  return tryProviders('profile', 'getProfile',
     (p) => PROVIDERS[p].getProfile!(symbol)
   )
 }
@@ -86,7 +89,7 @@ export async function getCandles(
     tdStartDate = toTradingDay(new Date(from * 1000)).toISOString().split('T')[0]
   }
 
-  return tryProviders('candles', (p) => {
+  return tryProviders('candles', 'getCandles', (p) => {
     if (p === 'twelvedata') {
       return twelvedata.getCandles(symbol, tdInterval, tdStartDate, tdEndDate)
     }
@@ -95,7 +98,19 @@ export async function getCandles(
 }
 
 export async function searchSymbol(query: string): Promise<Asset[]> {
-  return tryProviders('search',
+  return tryProviders('search', 'searchSymbol',
     (p) => PROVIDERS[p].searchSymbol!(query)
+  )
+}
+
+export async function getEarningsCalendar(from: string, to: string): Promise<EarningsEvent[]> {
+  return tryProviders('earnings', 'getEarningsCalendar',
+    (p) => PROVIDERS[p].getEarningsCalendar!(from, to)
+  )
+}
+
+export async function getEconomicCalendar(from: string, to: string): Promise<EconomicEvent[]> {
+  return tryProviders('economic', 'getEconomicCalendar',
+    (p) => PROVIDERS[p].getEconomicCalendar!(from, to)
   )
 }

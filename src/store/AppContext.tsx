@@ -49,6 +49,7 @@ const defaultSettings: AppSettings = {
   finnhubApiKey: '',
   twelveDataApiKey: '',
   exchangeRateApiKey: '',
+  fmpApiKey: '',
   enableForking: true,
   enableUndoRedo: true,
   undoWarningEnabled: true,
@@ -168,6 +169,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('finnhub_api_key', state.settings.finnhubApiKey)
     localStorage.setItem('twelvedata_api_key', state.settings.twelveDataApiKey)
     localStorage.setItem('exchangerate_api_key', state.settings.exchangeRateApiKey)
+    localStorage.setItem('fmp_api_key', state.settings.fmpApiKey)
   }, [state.settings])
 
   const activePortfolio = state.portfolios.find(

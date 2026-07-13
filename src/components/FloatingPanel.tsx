@@ -7,6 +7,7 @@ const PANEL_TYPES: { value: PanelType; label: string }[] = [
   { value: 'positions', label: 'Portfolio Status' },
   { value: 'watchlists', label: 'Watchlists' },
   { value: 'notes', label: 'Notes' },
+  { value: 'calendar', label: 'Calendar' },
 ]
 
 const MIN_W = 300

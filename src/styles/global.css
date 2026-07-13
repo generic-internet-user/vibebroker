@@ -317,6 +317,10 @@ tr:hover td {
   color: var(--negative);
 }
 
+.text-warning {
+  color: var(--warning);
+}
+
 .text-muted {
   color: var(--text-muted);
 }
