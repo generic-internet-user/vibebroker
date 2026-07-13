@@ -10,7 +10,8 @@ import { SettingsDialog } from './components/SettingsDialog'
 import { KeyboardShortcuts } from './components/KeyboardShortcuts'
 
 import { Modal, WarningScreen } from './components/Modals'
-import { defaultPortfolioSettings } from './lib/trading'
+import { SimulationSettingsForm } from './components/SimulationSettingsForm'
+import type { PortfolioSettings } from './types'
 import { exportPortfolioJSON, exportAllPortfolios, exportTradesCSV, downloadFile, readFileAsText, importAndSavePortfolios } from './lib/export'
 import * as marketData from './lib/market-data'
 import type { Portfolio, OrderAction } from './types'
@@ -33,6 +34,8 @@ export default function App() {
   const [forkWarning, setForkWarning] = useState(false)
   const [forkSourceId, setForkSourceId] = useState<string | null>(null)
   const [forkNote, setForkNote] = useState('')
+  const [editSettingsId, setEditSettingsId] = useState<string | null>(null)
+  const [editSettings, setEditSettings] = useState<PortfolioSettings | null>(null)
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return
@@ -133,7 +136,7 @@ export default function App() {
       performanceHistory: [],
       notes: '',
       settings: {
-        ...defaultPortfolioSettings(),
+        ...state.settings.defaultSimulationSettings,
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -216,6 +219,24 @@ export default function App() {
     }
   }
 
+  const handleEditSettings = (id: string) => {
+    const p = state.portfolios.find(pf => pf.id === id)
+    if (!p) return
+    setEditSettingsId(id)
+    setEditSettings({ ...p.settings })
+  }
+
+  const savePortfolioSettings = async () => {
+    if (!editSettingsId || !editSettings) return
+    const p = state.portfolios.find(pf => pf.id === editSettingsId)
+    if (!p) return
+    const updated = { ...p, settings: editSettings, updatedAt: Date.now() }
+    await savePortfolio(updated)
+    dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
+    setEditSettingsId(null)
+    setEditSettings(null)
+  }
+
   const confirmUndo = () => {
     setUndoWarning(false)
     refreshData()
@@ -280,6 +301,7 @@ export default function App() {
           onArchive={handleArchive}
           onDelete={handleDelete}
           onFork={(id) => { setForkSourceId(id); setForkWarning(true) }}
+          onEditSettings={handleEditSettings}
         />
 
         <div className="main" style={{ overflow: 'hidden' }}>
@@ -366,6 +388,22 @@ export default function App() {
         onImport={handleImport}
       />
       <KeyboardShortcuts open={showShortcuts} onClose={() => setShowShortcuts(false)} />
+
+      {editSettingsId && editSettings && (
+        <Modal
+          open={!!editSettingsId}
+          onClose={() => { setEditSettingsId(null); setEditSettings(null) }}
+          title="Portfolio Settings"
+          footer={
+            <>
+              <button onClick={() => { setEditSettingsId(null); setEditSettings(null) }}>Cancel</button>
+              <button className="btn-primary" onClick={savePortfolioSettings}>Save</button>
+            </>
+          }
+        >
+          <SimulationSettingsForm value={editSettings} onChange={setEditSettings} />
+        </Modal>
+      )}
 
       <WarningScreen
         open={forkWarning}

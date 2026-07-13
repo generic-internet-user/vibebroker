@@ -46,12 +46,14 @@ VibeBroker is a local-first paper trading web application. All data lives in the
 
 ## Market data API priority
 
-- Finnhub (primary, real-time US equities, generous free tier)
-- Twelve Data (secondary, broader asset coverage)
+- Finnhub (primary, real-time US equities, generous free tier; earnings calendar)
+- Twelve Data (secondary, broader asset coverage; candles)
+- Financial Modeling Prep (economic calendar, free tier; BYOK)
 - Frankfurter (currency, no key required)
 - ExchangeRate-API (currency, broader currency support)
 - All API keys are BYOK (Bring Your Own Key) — configured via Settings UI
 - Keys stored in localStorage
+- Calendars are wired through the existing market-data registry (`src/lib/market-data`): `earnings` use-case → Finnhub, `economic` use-case → FMP. Add new providers there rather than hard-coding fetches.
 
 ## No-nos
 

@@ -55,8 +55,8 @@ Future features and improvements planned for VibeBroker.
 - [ ] Heat map
 - [ ] Sector allocation visualization
 - [ ] Trading calendar
-- [ ] Earnings calendar
-- [ ] Economic calendar
+- [x] Earnings calendar
+- [x] Economic calendar
 - [ ] Custom alerts
 - [ ] Price alerts
 - [ ] Notes on positions, assets, and trades

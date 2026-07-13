@@ -7,9 +7,10 @@ interface Props {
   onArchive: (id: string) => void
   onDelete: (id: string) => void
   onFork: (id: string) => void
+  onEditSettings: (id: string) => void
 }
 
-export function PortfolioSidebar({ onRename, onClone, onArchive, onDelete, onFork }: Props) {
+export function PortfolioSidebar({ onRename, onClone, onArchive, onDelete, onFork, onEditSettings }: Props) {
   const { state, dispatch } = useApp()
 
   const activePortfolios = state.portfolios.filter(p => !p.archived)
@@ -42,6 +43,7 @@ export function PortfolioSidebar({ onRename, onClone, onArchive, onDelete, onFor
               <button className="btn-sm" onClick={() => onFork(p.id)} title="Fork">F</button>
             )}
             <button className="btn-sm" onClick={() => onArchive(p.id)} title="Archive">A</button>
+            <button className="btn-sm" onClick={() => onEditSettings(p.id)} title="Settings">⚙</button>
             <button className="btn-sm" onClick={() => onDelete(p.id)} title="Delete">X</button>
           </div>
         </div>

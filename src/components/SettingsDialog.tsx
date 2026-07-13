@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../store/AppContext'
 import { Modal } from './Modals'
-import type { Provider, UseCase } from '../types'
+import { SimulationSettingsForm } from './SimulationSettingsForm'
+import type { Provider, UseCase, PortfolioSettings } from '../types'
 import { PROVIDERS, PROVIDER_LIST, USECASE_LABELS } from '../lib/market-data/registry'
 
 interface Props {
@@ -79,6 +80,15 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
               value={localSettings.exchangeRateApiKey}
               onChange={(e) => setLocalSettings({ ...localSettings, exchangeRateApiKey: e.target.value })}
               placeholder="Get from exchangerate-api.com"
+            />
+          </div>
+          <div className="form-row">
+            <label>FMP API Key</label>
+            <input
+              type="password"
+              value={localSettings.fmpApiKey}
+              onChange={(e) => setLocalSettings({ ...localSettings, fmpApiKey: e.target.value })}
+              placeholder="Get from financialmodelingprep.com (economic calendar)"
             />
           </div>
           <div className="text-muted text-sm mt-2">
@@ -294,6 +304,7 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
 
       {activeTab === 'Simulation' && (
         <div>
+          <div className="panel-header">Global Behavior</div>
           <div className="form-row">
             <label>Enable Forking</label>
             <input
@@ -330,6 +341,17 @@ export function SettingsDialog({ open, onClose, activePortfolioId, onExportSingl
               style={{ height: 'auto', width: 'auto' }}
             />
           </div>
+
+          <div className="panel-header" style={{ marginTop: 8 }}>Default Simulation Settings</div>
+          <div className="text-sm text-muted mb-2">
+            These defaults apply to new portfolios. Each portfolio can override them in its own settings (gear icon in the sidebar).
+          </div>
+          <SimulationSettingsForm
+            value={localSettings.defaultSimulationSettings}
+            onChange={(s: PortfolioSettings) =>
+              setLocalSettings({ ...localSettings, defaultSimulationSettings: s })
+            }
+          />
         </div>
       )}
     </Modal>

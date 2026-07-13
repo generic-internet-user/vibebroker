@@ -27,6 +27,9 @@ Open http://localhost:5173 in your browser.
 - **Search** – Global search across symbols, companies, trades, and watchlists
 - **Import/Export** – Full portfolio JSON archives and broker-like CSV trade exports
 - **Risk management** – Configurable position size, exposure, stop-loss, and take-profit limits
+- **Earnings & economic calendars** – Upcoming earnings (Finnhub) and economic events (Financial Modeling Prep)
+- **Configurable simulation** – Exposure limits, commission, slippage, spread, and execution models, configurable globally and per portfolio
+- **Multi-monitor layouts** – Window layouts are saved per display and restored when you move or undock
 - **Forking** – Save multiple independent simulation states
 - **Keyboard shortcuts** – Buy, sell, search, and more
 - **Dark mode** – Follows system preference
@@ -38,6 +41,8 @@ All API connections originate from your browser (client-side only). You must bri
 | Data | Primary | Secondary |
 |------|---------|-----------|
 | Market data (quotes, candles, search) | [Finnhub](https://finnhub.io) (free tier: 60 req/min) | [Twelve Data](https://twelvedata.com) (free tier: 800 req/day) |
+| Earnings calendar | [Finnhub](https://finnhub.io) (free tier) | — |
+| Economic calendar | [Financial Modeling Prep](https://financialmodelingprep.com) (free tier: 250 req/day) | — |
 | Currency conversion | [Frankfurter](https://api.frankfurter.app) (no key needed, unlimited, ECB rates) | [ExchangeRate-API](https://exchangerate-api.com) (free tier: 1,500 req/month) |
 
 Configure API keys in the Settings screen (keyboard: `?`).
