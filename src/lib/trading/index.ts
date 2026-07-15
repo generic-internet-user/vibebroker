@@ -53,6 +53,14 @@ export function calculateSpread(
   }
 }
 
-export { createOrder, executeOrder, applyTradeToPortfolio, validateOrderRisk } from './engine'
+export {
+  createOrder,
+  evaluateFill,
+  applyTradeToPortfolio,
+  submitOrder,
+  processPendingOrders,
+  cancelOrder,
+  validateOrderRisk,
+} from './engine'
 export { calculateCommission, defaultCommissionModel } from './commissions'
 export { simulateSlippage, defaultSlippageModel } from './slippage'

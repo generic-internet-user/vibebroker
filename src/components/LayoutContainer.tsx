@@ -45,6 +45,7 @@ interface Props {
   portfolio: Portfolio
   onBuy: () => void
   onSell: () => void
+  onCancelOrder: (orderId: string) => void
 }
 
 const PANEL_LABELS: Record<PanelType, string> = {
@@ -56,7 +57,7 @@ const PANEL_LABELS: Record<PanelType, string> = {
   calendar: 'Calendar',
 }
 
-export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
+export function LayoutContainer({ portfolio, onBuy, onSell, onCancelOrder }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [presets, setPresets] = useState<LayoutConfig[]>(loadPresets)
   const [activePreset, setActivePreset] = useState<string | null>(null)
@@ -222,7 +223,7 @@ export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
       />
     ),
     watchlists: () => <WatchlistsPanel />,
-    positions: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} />,
+    positions: () => <PortfolioView portfolio={portfolio} onBuy={onBuy} onSell={onSell} onCancelOrder={onCancelOrder} />,
     notes: () => <NotesPanel portfolio={portfolio} />,
     calendar: () => <CalendarPanel />,
   }

@@ -43,6 +43,7 @@ export interface Order {
   price: number
   stopPrice?: number
   limitPrice?: number
+  currency?: string
   status: OrderStatus
   filledQuantity: number
   averageFillPrice: number
@@ -66,6 +67,7 @@ export interface Position {
   realizedPnL: number
   dayChange: number
   dayChangePercent: number
+  currency: string
   asset: Asset
 }
 
@@ -73,7 +75,9 @@ export interface Portfolio {
   id: string
   name: string
   baseCurrency: string
+  accountType: 'cash' | 'margin'
   cashBalance: number
+  realizedPnL: number
   positions: Position[]
   orders: Order[]
   tradeHistory: Trade[]
@@ -154,6 +158,8 @@ export interface Trade {
   price: number
   commission: number
   totalValue: number
+  currency?: string
+  realizedPnL?: number
   timestamp: number
   notes?: string
 }

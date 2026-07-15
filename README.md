@@ -21,14 +21,14 @@ Open http://localhost:5173 in your browser.
 ## Features
 
 - **Portfolio management** – Create, rename, clone, archive, delete multiple independent portfolios
-- **Paper trading** – Market, limit, stop, and stop-limit orders with commission, slippage, and spread simulation
+- **Paper trading** – Market, limit, stop, and stop-limit orders with pending-order lifecycle, short selling, partial fills, and commission + slippage simulation. Trade cost/proceeds are FX-converted into the portfolio base currency.
 - **Technical indicators** – SMA, EMA, VWAP, RSI, MACD, Bollinger Bands, ATR, Stochastic Oscillator
 - **Watchlists** – Unlimited watchlists with live price tracking
 - **Search** – Global search across symbols, companies, trades, and watchlists
 - **Import/Export** – Full portfolio JSON archives and broker-like CSV trade exports
 - **Risk management** – Configurable position size, exposure, stop-loss, and take-profit limits
 - **Earnings & economic calendars** – Upcoming earnings (Finnhub) and economic events (Financial Modeling Prep)
-- **Configurable simulation** – Exposure limits, commission, slippage, spread, and execution models, configurable globally and per portfolio
+- **Configurable simulation** – Exposure limits, commission, slippage, and currency-conversion fee, configurable globally and per portfolio. Spread and execution models are configurable but not yet applied to fills.
 - **Multi-monitor layouts** – Window layouts are saved per display and restored when you move or undock
 - **Forking** – Save multiple independent simulation states
 - **Keyboard shortcuts** – Buy, sell, search, and more

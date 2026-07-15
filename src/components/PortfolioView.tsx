@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import type { Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
+import { useFxRates } from '../lib/currency/useFxRates'
 
 interface Props {
   portfolio: Portfolio
   onBuy: () => void
   onSell: () => void
+  onCancelOrder: (orderId: string) => void
 }
 
-export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
+export function PortfolioView({ portfolio, onBuy, onSell, onCancelOrder }: Props) {
   const [activeTab, setActiveTab] = useState('positions')
 
   return (
@@ -31,7 +33,7 @@ export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
       </div>
 
       {activeTab === 'positions' && <PositionsTab portfolio={portfolio} />}
-      {activeTab === 'orders' && <OrdersTab portfolio={portfolio} />}
+      {activeTab === 'orders' && <OrdersTab portfolio={portfolio} onCancelOrder={onCancelOrder} />}
       {activeTab === 'history' && <HistoryTab portfolio={portfolio} />}
       {activeTab === 'performance' && <PerformanceTab portfolio={portfolio} />}
     </div>
@@ -40,6 +42,8 @@ export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
 
 function PositionsTab({ portfolio }: { portfolio: Portfolio }) {
   const { state } = useApp()
+  const rates = useFxRates(portfolio.baseCurrency, portfolio.positions.map(p => p.currency || 'USD'))
+  const rate = (c: string) => rates[c] || 1
 
   if (portfolio.positions.length === 0) {
     return <div className="empty-state flex-1">No positions. Start trading!</div>
@@ -62,8 +66,9 @@ function PositionsTab({ portfolio }: { portfolio: Portfolio }) {
         {portfolio.positions.map((pos) => {
           const quote = state.quotes[pos.symbol]
           const currentPrice = quote?.price || pos.currentPrice
-          const marketValue = pos.quantity * currentPrice
-          const cost = pos.averageCost * pos.quantity
+          const r = rate(pos.currency || 'USD')
+          const marketValue = pos.quantity * currentPrice * r
+          const cost = pos.averageCost * pos.quantity * r
           const unrealizedPnL = marketValue - cost
           const unrealizedPnLPercent = cost > 0 ? (unrealizedPnL / cost) * 100 : 0
 
@@ -88,7 +93,7 @@ function PositionsTab({ portfolio }: { portfolio: Portfolio }) {
   )
 }
 
-function OrdersTab({ portfolio }: { portfolio: Portfolio }) {
+function OrdersTab({ portfolio, onCancelOrder }: { portfolio: Portfolio; onCancelOrder: (orderId: string) => void }) {
   const sorted = [...portfolio.orders].sort((a, b) => b.createdAt - a.createdAt)
 
   if (sorted.length === 0) {
@@ -107,21 +112,30 @@ function OrdersTab({ portfolio }: { portfolio: Portfolio }) {
           <th className="text-right">Price</th>
           <th className="text-right">Filled</th>
           <th>Status</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        {sorted.map((o) => (
-          <tr key={o.id}>
-            <td className="text-sm">{new Date(o.createdAt).toLocaleDateString()}</td>
-            <td className="font-bold">{o.symbol}</td>
-            <td><span className={`badge ${o.action === 'buy' || o.action === 'buy_to_cover' ? 'badge-buy' : 'badge-sell'}`}>{o.action.replace('_', ' ')}</span></td>
-            <td>{o.type}</td>
-            <td className="text-right mono">{o.quantity}</td>
-            <td className="text-right mono">${(o.averageFillPrice || o.price).toFixed(2)}</td>
-            <td className="text-right mono">{o.filledQuantity}/{o.quantity}</td>
-            <td><span className={`badge badge-${o.status}`}>{o.status}</span></td>
-          </tr>
-        ))}
+        {sorted.map((o) => {
+          const cancellable = o.status === 'pending' || o.status === 'partially_filled'
+          return (
+            <tr key={o.id}>
+              <td className="text-sm">{new Date(o.createdAt).toLocaleDateString()}</td>
+              <td className="font-bold">{o.symbol}</td>
+              <td><span className={`badge ${o.action === 'buy' || o.action === 'buy_to_cover' ? 'badge-buy' : 'badge-sell'}`}>{o.action.replace('_', ' ')}</span></td>
+              <td>{o.type}</td>
+              <td className="text-right mono">{o.quantity}</td>
+              <td className="text-right mono">${(o.averageFillPrice || o.price).toFixed(2)}</td>
+              <td className="text-right mono">{o.filledQuantity}/{o.quantity}</td>
+              <td><span className={`badge badge-${o.status}`}>{o.status}</span></td>
+              <td className="text-right">
+                {cancellable && (
+                  <button className="btn-sm" onClick={() => onCancelOrder(o.id)}>Cancel</button>
+                )}
+              </td>
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )
@@ -168,17 +182,20 @@ function HistoryTab({ portfolio }: { portfolio: Portfolio }) {
 
 function PerformanceTab({ portfolio }: { portfolio: Portfolio }) {
   const { state } = useApp()
+  const rates = useFxRates(portfolio.baseCurrency, portfolio.positions.map(p => p.currency || 'USD'))
+  const rate = (c: string) => rates[c] || 1
 
   const positionsValue = portfolio.positions.reduce((s, p) => {
     const quote = state.quotes[p.symbol]
-    return s + (quote?.price || p.currentPrice) * p.quantity
+    return s + (quote?.price || p.currentPrice) * p.quantity * rate(p.currency || 'USD')
   }, 0)
 
   const totalValue = portfolio.cashBalance + positionsValue
-  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity, 0)
+  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity * rate(p.currency || 'USD'), 0)
   const totalPnL = totalValue - portfolio.cashBalance - totalInvested
   const totalReturn = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
-  const totalCommission = portfolio.tradeHistory.reduce((s, t) => s + t.commission, 0)
+  const totalCommission = portfolio.tradeHistory.reduce((s, t) => s + (t.commission || 0), 0)
+  const realizedPnL = portfolio.realizedPnL ?? 0
   const tradeCount = portfolio.tradeHistory.length
   const cashPct = totalValue > 0 ? (portfolio.cashBalance / totalValue) * 100 : 0
   const positionsPct = totalValue > 0 ? (positionsValue / totalValue) * 100 : 0
@@ -192,9 +209,15 @@ function PerformanceTab({ portfolio }: { portfolio: Portfolio }) {
         </div>
       </div>
       <div className="stat">
-        <div className="label">Total P&L</div>
+        <div className="label">Unrealized P&L</div>
         <div className={`value ${totalPnL >= 0 ? 'text-positive' : 'text-negative'}`}>
           ${totalPnL.toFixed(2)}
+        </div>
+      </div>
+      <div className="stat">
+        <div className="label">Realized P&L</div>
+        <div className={`value ${realizedPnL >= 0 ? 'text-positive' : 'text-negative'}`}>
+          ${realizedPnL.toFixed(2)}
         </div>
       </div>
       <div className="stat">

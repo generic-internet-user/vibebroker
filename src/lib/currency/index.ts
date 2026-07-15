@@ -1,6 +1,21 @@
 import * as frankfurter from './frankfurter'
 import * as exchangerate from './exchangerate'
 
+const rateCache = new Map<string, { rate: number; expires: number }>()
+const RATE_TTL_MS = 5 * 60 * 1000
+
+function cacheKey(from: string, to: string): string {
+  return `${from}->${to}`
+}
+
+async function fetchRate(from: string, to: string): Promise<number> {
+  try {
+    return await frankfurter.convert(1, from, to)
+  } catch {
+    return exchangerate.convert(1, from, to)
+  }
+}
+
 export async function convertCurrency(
   amount: number,
   from: string,
@@ -9,17 +24,8 @@ export async function convertCurrency(
 ): Promise<number> {
   if (from === to) return amount
 
-  try {
-    const result = await frankfurter.convert(amount, from, to)
-    return applyFee(result, fee)
-  } catch {
-    try {
-      const result = await exchangerate.convert(amount, from, to)
-      return applyFee(result, fee)
-    } catch {
-      return amount
-    }
-  }
+  const rate = await getConversionRate(from, to)
+  return applyFee(amount * rate, fee)
 }
 
 export async function getConversionRate(
@@ -27,13 +33,14 @@ export async function getConversionRate(
   to: string
 ): Promise<number> {
   if (from === to) return 1
-  try {
-    const result = await frankfurter.convert(1, from, to)
-    return result
-  } catch {
-    const result = await exchangerate.convert(1, from, to)
-    return result
-  }
+
+  const key = cacheKey(from, to)
+  const cached = rateCache.get(key)
+  if (cached && cached.expires > Date.now()) return cached.rate
+
+  const rate = await fetchRate(from, to)
+  rateCache.set(key, { rate, expires: Date.now() + RATE_TTL_MS })
+  return rate
 }
 
 function applyFee(amount: number, feePercentage: number): number {

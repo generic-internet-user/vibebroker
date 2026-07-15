@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { OrderAction, OrderType, Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
-import { createOrder, validateOrderRisk, executeOrder, applyTradeToPortfolio } from '../lib/trading'
+import { createOrder, validateOrderRisk, submitOrder } from '../lib/trading'
+import { getConversionRate } from '../lib/currency'
 import { savePortfolio } from '../db'
 import * as marketData from '../lib/market-data'
 import { Modal } from './Modals'
@@ -21,7 +22,6 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
   const [quantity, setQuantity] = useState('100')
   const [price, setPrice] = useState('')
   const [stopPrice, setStopPrice] = useState('')
-  const [limitPrice] = useState('')
   const [notes, setNotes] = useState('')
   const [stopLoss, setStopLoss] = useState(portfolio.settings.defaultStopLoss > 0 ? String(portfolio.settings.defaultStopLoss) : '')
   const [takeProfit, setTakeProfit] = useState(portfolio.settings.defaultTakeProfit > 0 ? String(portfolio.settings.defaultTakeProfit) : '')
@@ -63,7 +63,7 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
       }
 
       let orderPrice = 0
-      if (type === 'limit') {
+      if (type === 'limit' || type === 'stop_limit') {
         orderPrice = parseFloat(price)
         if (isNaN(orderPrice) || orderPrice <= 0) {
           setError('Invalid limit price')
@@ -71,20 +71,22 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
           return
         }
       }
+      if (type === 'stop' || type === 'stop_limit') {
+        const sp = parseFloat(stopPrice)
+        if (isNaN(sp) || sp <= 0) {
+          setError('Invalid stop price')
+          setSubmitting(false)
+          return
+        }
+      }
 
-      let order = createOrder({
-        portfolioId: portfolio.id,
-        symbol: symbol.toUpperCase(),
-        type,
-        action,
-        quantity: qty,
-        price: orderPrice,
-        stopPrice: type === 'stop' || type === 'stop_limit' ? parseFloat(stopPrice) : undefined,
-        limitPrice: type === 'stop_limit' ? parseFloat(limitPrice) : undefined,
-        notes,
-        stopLoss: parseFloat(stopLoss) || undefined,
-        takeProfit: parseFloat(takeProfit) || undefined,
-      })
+      let profile = null
+      try {
+        profile = await marketData.getProfile(symbol.toUpperCase())
+      } catch {
+        profile = null
+      }
+      const currency = profile?.currency || 'USD'
 
       let quote
       try {
@@ -95,15 +97,45 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
         return
       }
 
-      const riskCheck = validateOrderRisk(order, portfolio, quote, portfolio.settings)
+      let rate = 1
+      try {
+        rate = await getConversionRate(currency, portfolio.baseCurrency)
+      } catch {
+        rate = 1
+      }
+      const orderCostBase = qty * quote.price * rate
+
+      const order = createOrder({
+        portfolioId: portfolio.id,
+        symbol: symbol.toUpperCase(),
+        type,
+        action,
+        quantity: qty,
+        price: orderPrice,
+        stopPrice: type === 'stop' || type === 'stop_limit' ? parseFloat(stopPrice) : undefined,
+        limitPrice: type === 'limit' || type === 'stop_limit' ? parseFloat(price) : undefined,
+        currency,
+        notes,
+        stopLoss: parseFloat(stopLoss) || undefined,
+        takeProfit: parseFloat(takeProfit) || undefined,
+      })
+
+      const riskCheck = validateOrderRisk(order, portfolio, quote, portfolio.settings, {
+        cashAvailable: portfolio.cashBalance,
+        orderCostBase,
+      })
       if (!riskCheck.valid) {
         setError(riskCheck.reason || 'Risk check failed')
         setSubmitting(false)
         return
       }
 
-      const { filledOrder, trade } = executeOrder(order, portfolio, quote, portfolio.settings)
-      const updatedPortfolio = applyTradeToPortfolio(portfolio, trade, filledOrder)
+      const updatedPortfolio = await submitOrder({
+        portfolio,
+        order,
+        quote,
+        settings: portfolio.settings,
+      })
 
       await savePortfolio(updatedPortfolio)
       dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updatedPortfolio })

@@ -13,6 +13,7 @@ import { Modal, WarningScreen } from './components/Modals'
 import { SimulationSettingsForm } from './components/SimulationSettingsForm'
 import type { PortfolioSettings } from './types'
 import { exportPortfolioJSON, exportAllPortfolios, exportTradesCSV, downloadFile, readFileAsText, importAndSavePortfolios } from './lib/export'
+import { processPendingOrders, cancelOrder } from './lib/trading'
 import * as marketData from './lib/market-data'
 import type { Portfolio, OrderAction } from './types'
 
@@ -103,16 +104,30 @@ export default function App() {
 
     if (activePortfolio) {
       activePortfolio.positions.forEach(p => symbols.add(p.symbol))
+      activePortfolio.orders.forEach(o => {
+        if (o.status === 'pending' || o.status === 'partially_filled') symbols.add(o.symbol)
+      })
     }
 
     if (symbols.size === 0) return
 
     const fetchQuotes = async () => {
+      const fetched: Record<string, typeof state.quotes[string]> = {}
       for (const symbol of symbols) {
         try {
           const quote = await marketData.getQuote(symbol)
+          fetched[symbol] = quote
           dispatch({ type: 'UPDATE_QUOTE', symbol, quote })
         } catch { }
+      }
+
+      if (activePortfolio) {
+        const localQuotes = { ...state.quotes, ...fetched }
+        const updated = await processPendingOrders(activePortfolio, localQuotes, activePortfolio.settings)
+        if (updated !== activePortfolio) {
+          await savePortfolio(updated)
+          dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
+        }
       }
     }
 
@@ -135,6 +150,8 @@ export default function App() {
       tradeHistory: [],
       performanceHistory: [],
       notes: '',
+      accountType: 'cash',
+      realizedPnL: 0,
       settings: {
         ...state.settings.defaultSimulationSettings,
       },
@@ -211,6 +228,13 @@ export default function App() {
     setForkSourceId(null)
     setForkNote('')
     setForkWarning(false)
+  }
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!activePortfolio) return
+    const updated = cancelOrder(activePortfolio, orderId)
+    await savePortfolio(updated)
+    dispatch({ type: 'UPDATE_PORTFOLIO', portfolio: updated })
   }
 
   const handleUndo = () => {
@@ -310,6 +334,7 @@ export default function App() {
               portfolio={activePortfolio}
               onBuy={() => { setOrderDefaultAction('buy'); setShowOrderForm(true) }}
               onSell={() => { setOrderDefaultAction('sell'); setShowOrderForm(true) }}
+              onCancelOrder={handleCancelOrder}
             />
           ) : (
             <div className="empty-state" style={{ marginTop: 48 }}>
