@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { LayoutConfig, LayoutPanel, PanelType, Timeframe, Portfolio } from '../types'
-import { useApp } from '../store/AppContext'
 import { Chart } from './Chart'
 import { PortfolioView } from './PortfolioView'
 import { WatchlistsPanel } from './WatchlistsPanel'
@@ -58,7 +57,6 @@ const PANEL_LABELS: Record<PanelType, string> = {
 }
 
 export function LayoutContainer({ portfolio, onBuy, onSell }: Props) {
-  const { state, dispatch } = useApp()
   const containerRef = useRef<HTMLDivElement>(null)
   const [presets, setPresets] = useState<LayoutConfig[]>(loadPresets)
   const [activePreset, setActivePreset] = useState<string | null>(null)

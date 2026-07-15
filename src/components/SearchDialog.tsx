@@ -89,7 +89,7 @@ export function SearchDialog({ open, onClose }: Props) {
     return () => clearTimeout(timer)
   }, [query, state.activePortfolioId, state.portfolios, state.watchlists, state.settings])
 
-  const handleSelect = (asset: Asset) => {
+  const handleSelect = (_asset: Asset) => {
     dispatch({ type: 'SET_ACTIVE_PORTFOLIO', id: state.activePortfolioId })
     onClose()
   }

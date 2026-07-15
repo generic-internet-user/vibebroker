@@ -1,4 +1,4 @@
-import type { Order, OrderAction, OrderType, Position, Portfolio, Trade, Quote, PortfolioSettings } from '../../types'
+import type { Order, OrderAction, OrderType, Portfolio, Trade, Quote, PortfolioSettings } from '../../types'
 import { calculateCommission } from './commissions'
 import { simulateSlippage } from './slippage'
 

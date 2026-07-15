@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Watchlist, Quote } from '../types'
+import type { Watchlist } from '../types'
 import { useApp } from '../store/AppContext'
 import { saveWatchlist, deleteWatchlist } from '../db'
 import * as marketData from '../lib/market-data'

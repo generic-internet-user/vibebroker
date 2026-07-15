@@ -14,14 +14,14 @@ interface Props {
 }
 
 export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: Props) {
-  const { dispatch, state } = useApp()
+  const { dispatch } = useApp()
   const [symbol, setSymbol] = useState('')
   const [action, setAction] = useState<OrderAction>(defaultAction)
   const [type, setType] = useState<OrderType>('market')
   const [quantity, setQuantity] = useState('100')
   const [price, setPrice] = useState('')
   const [stopPrice, setStopPrice] = useState('')
-  const [limitPrice, setLimitPrice] = useState('')
+  const [limitPrice] = useState('')
   const [notes, setNotes] = useState('')
   const [stopLoss, setStopLoss] = useState(portfolio.settings.defaultStopLoss > 0 ? String(portfolio.settings.defaultStopLoss) : '')
   const [takeProfit, setTakeProfit] = useState(portfolio.settings.defaultTakeProfit > 0 ? String(portfolio.settings.defaultTakeProfit) : '')

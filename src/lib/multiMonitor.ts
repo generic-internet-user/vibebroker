@@ -10,7 +10,7 @@ interface MonitorLayouts {
 }
 
 export function getMonitorSignature(): string {
-  const s = window.screen
+  const s = window.screen as Screen & { availLeft: number; availTop: number }
   return [
     s.width,
     s.height,

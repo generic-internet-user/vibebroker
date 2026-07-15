@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Portfolio, Order, Trade } from '../types'
+import type { Portfolio } from '../types'
 import { useApp } from '../store/AppContext'
 
 interface Props {
@@ -9,7 +9,6 @@ interface Props {
 }
 
 export function PortfolioView({ portfolio, onBuy, onSell }: Props) {
-  const { state, dispatch } = useApp()
   const [activeTab, setActiveTab] = useState('positions')
 
   return (

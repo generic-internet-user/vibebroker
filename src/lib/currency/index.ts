@@ -43,7 +43,6 @@ function applyFee(amount: number, feePercentage: number): number {
 
 export async function getSupportedCurrencies(): Promise<string[]> {
   try {
-    const fallback = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'CNY', 'INR', 'BRL', 'MXN', 'SGD', 'HKD', 'KRW', 'ZAR', 'TRY']
     const rates = await frankfurter.getRates('USD')
     return [rates.base, ...Object.keys(rates.rates)].sort()
   } catch {

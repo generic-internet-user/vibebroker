@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react'
+import { useRef, useState, useEffect, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react'
 import type { PanelType } from '../types'
 
 const PANEL_TYPES: { value: PanelType; label: string }[] = [
@@ -93,7 +93,6 @@ export function FloatingPanel({
 
         const c = containerRef.current
         if (c) {
-          const rightEdge = d.startX + d.startW
           newW = Math.min(newW, c.clientWidth - (d.startX - (newW - d.startW)))
           newH = Math.min(newH, c.clientHeight - (d.startY - (newH - d.startH)) - 32)
           newW = Math.min(newW, c.clientWidth)

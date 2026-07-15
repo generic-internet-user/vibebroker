@@ -85,29 +85,31 @@ export function macd(
   if (data.length < slowPeriod) return []
 
   const closes = data.map((d) => d.close)
-  const fastEMA = ema(closes, fastPeriod)
-  const slowEMA = ema(closes, slowPeriod)
+  const fastEMA = ema(closes, fastPeriod).map((r) => r.value as number)
+  const slowEMA = ema(closes, slowPeriod).map((r) => r.value as number)
   const macdLine: number[] = []
 
   const offset = fastEMA.length - slowEMA.length
   for (let i = 0; i < slowEMA.length; i++) {
-    macdLine.push(fastEMA[i + offset].value - slowEMA[i].value)
+    macdLine.push(fastEMA[i + offset] - slowEMA[i])
   }
 
   const signal = ema(macdLine, signalPeriod)
   const signalOffset = macdLine.length - signal.length
   const dataIdxStart = slowPeriod - 1 + signalOffset + offset
 
-  return signal
-    .map((s, i) => {
-      const dataIdx = dataIdxStart + i
-      if (dataIdx >= data.length) return null
-      return {
-        timestamp: data[dataIdx].timestamp,
-        value: [macdLine[i + signalOffset], s.value, macdLine[i + signalOffset] - s.value] as [number, number, number],
-      }
+  const result: IndicatorResult[] = []
+  signal.forEach((s, i) => {
+    const dataIdx = dataIdxStart + i
+    if (dataIdx >= data.length) return
+    const signalVal = s.value as number
+    const macdVal = macdLine[i + signalOffset]
+    result.push({
+      timestamp: data[dataIdx].timestamp,
+      value: [macdVal, signalVal, macdVal - signalVal] as [number, number, number],
     })
-    .filter((r): r is IndicatorResult => r !== null)
+  })
+  return result
 }
 
 export function bollinger(

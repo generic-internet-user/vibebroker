@@ -3,7 +3,7 @@ import * as finnhub from './finnhub'
 import * as twelvedata from './twelvedata'
 import * as fmp from './fmp'
 
-interface ProviderApi {
+export interface ProviderApi {
   getQuote?: (symbol: string) => Promise<Quote>
   getProfile?: (symbol: string) => Promise<Asset | null>
   getCandles?: (symbol: string, resolution: string, from: number, to: number) => Promise<OHLCV[]>
@@ -19,17 +19,17 @@ export interface ProviderMeta {
 
 export const PROVIDERS = {
   finnhub: {
-    ...(finnhub as ProviderApi),
+    ...(finnhub as unknown as ProviderApi),
     label: 'Finnhub',
     note: 'Real-time quotes, 60 req/min free. Earnings calendar free; economic calendar is a paid add-on.',
   },
   twelvedata: {
-    ...(twelvedata as ProviderApi),
+    ...(twelvedata as unknown as ProviderApi),
     label: 'Twelve Data',
     note: '800 candle req/day free, 8 req/min.',
   },
   fmp: {
-    ...(fmp as ProviderApi),
+    ...(fmp as unknown as ProviderApi),
     label: 'Financial Modeling Prep',
     note: '250 req/day free. Economic calendar.',
   },

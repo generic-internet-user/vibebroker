@@ -46,7 +46,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange, onSymbolChange }: 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [enabledIndicators, setEnabledIndicators] = useState<IndicatorType[]>([])
-  const [indicatorParams, setIndicatorParams] = useState<Record<string, Record<string, number>>>({})
+  const [indicatorParams] = useState<Record<string, Record<string, number>>>({})
   const [showIndDropdown, setShowIndDropdown] = useState(false)
   const [showSymbolDropdown, setShowSymbolDropdown] = useState(false)
 
@@ -123,7 +123,6 @@ export function Chart({ symbol, timeframe, onTimeframeChange, onSymbolChange }: 
 
   useEffect(() => {
     if (!chartRef.current) return
-    const bg = resolveCSSVar('--bg-secondary')
     const text = resolveCSSVar('--text-secondary')
     const border = resolveCSSVar('--border')
     const borderLight = resolveCSSVar('--border-light')
@@ -239,7 +238,7 @@ export function Chart({ symbol, timeframe, onTimeframeChange, onSymbolChange }: 
       const firstVal = results[0].value
 
       if (typeof firstVal === 'number') {
-        addLine(indicator, color, results.map(r => ({ time: toTime(r), value: r.value })))
+        addLine(indicator, color, results.map(r => ({ time: toTime(r), value: r.value as number })))
       } else if (firstVal.length === 3) {
         if (indicator === 'bollinger') {
           addLine(`${indicator}_mid_${color}`, color, results.map(r => ({ time: toTime(r), value: (r.value as [number, number, number])[1] })))

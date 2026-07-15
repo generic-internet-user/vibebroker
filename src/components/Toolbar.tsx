@@ -1,4 +1,3 @@
-import React from 'react'
 import { useApp } from '../store/AppContext'
 
 interface ToolbarProps {
@@ -13,7 +12,6 @@ interface ToolbarProps {
 
 export function Toolbar({ onNewPortfolio, onNewOrder, onSearch, onSettings, onKeyboardShortcuts, onUndo, undoDisabled }: ToolbarProps) {
   const { state } = useApp()
-  const portfolioCount = state.portfolios.length
   const activeName = state.portfolios.find(p => p.id === state.activePortfolioId)?.name
 
   return (

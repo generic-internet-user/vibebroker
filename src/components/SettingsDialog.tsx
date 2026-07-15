@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../store/AppContext'
 import { Modal } from './Modals'
 import { SimulationSettingsForm } from './SimulationSettingsForm'
-import type { Provider, UseCase, PortfolioSettings } from '../types'
+import type { UseCase, PortfolioSettings } from '../types'
 import { PROVIDERS, PROVIDER_LIST, USECASE_LABELS } from '../lib/market-data/registry'
 
 interface Props {
   open: boolean
   onClose: () => void
-  activePortfolioId?: string
+  activePortfolioId?: string | null
   onExportSingle?: () => void
   onExportAll?: () => void
   onExportCSV?: () => void
