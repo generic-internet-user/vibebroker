@@ -86,7 +86,6 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
       } catch {
         profile = null
       }
-      const currency = profile?.currency || 'USD'
 
       let quote
       try {
@@ -96,6 +95,8 @@ export function OrderForm({ open, onClose, portfolio, defaultAction = 'buy' }: P
         setSubmitting(false)
         return
       }
+
+      const currency = quote.currency || profile?.currency || 'USD'
 
       let rate = 1
       try {

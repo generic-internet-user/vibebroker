@@ -44,6 +44,7 @@ function PositionsTab({ portfolio }: { portfolio: Portfolio }) {
   const { state } = useApp()
   const rates = useFxRates(portfolio.baseCurrency, portfolio.positions.map(p => p.currency || 'USD'))
   const rate = (c: string) => rates[c] || 1
+  const currencyOf = (pos: typeof portfolio.positions[number]) => state.quotes[pos.symbol]?.currency || pos.currency || 'USD'
 
   if (portfolio.positions.length === 0) {
     return <div className="empty-state flex-1">No positions. Start trading!</div>
@@ -66,7 +67,7 @@ function PositionsTab({ portfolio }: { portfolio: Portfolio }) {
         {portfolio.positions.map((pos) => {
           const quote = state.quotes[pos.symbol]
           const currentPrice = quote?.price || pos.currentPrice
-          const r = rate(pos.currency || 'USD')
+          const r = rate(currencyOf(pos))
           const marketValue = pos.quantity * currentPrice * r
           const cost = pos.averageCost * pos.quantity * r
           const unrealizedPnL = marketValue - cost
@@ -184,14 +185,15 @@ function PerformanceTab({ portfolio }: { portfolio: Portfolio }) {
   const { state } = useApp()
   const rates = useFxRates(portfolio.baseCurrency, portfolio.positions.map(p => p.currency || 'USD'))
   const rate = (c: string) => rates[c] || 1
+  const currencyOf = (p: typeof portfolio.positions[number]) => state.quotes[p.symbol]?.currency || p.currency || 'USD'
 
   const positionsValue = portfolio.positions.reduce((s, p) => {
     const quote = state.quotes[p.symbol]
-    return s + (quote?.price || p.currentPrice) * p.quantity * rate(p.currency || 'USD')
+    return s + (quote?.price || p.currentPrice) * p.quantity * rate(currencyOf(p))
   }, 0)
 
   const totalValue = portfolio.cashBalance + positionsValue
-  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity * rate(p.currency || 'USD'), 0)
+  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity * rate(currencyOf(p)), 0)
   const totalPnL = totalValue - portfolio.cashBalance - totalInvested
   const totalReturn = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
   const totalCommission = portfolio.tradeHistory.reduce((s, t) => s + (t.commission || 0), 0)

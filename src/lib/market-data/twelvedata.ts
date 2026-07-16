@@ -28,6 +28,7 @@ export async function getQuote(symbol: string): Promise<Quote> {
     open: parseFloat(data.open || '0'),
     previousClose: parseFloat(data.previous_close || '0'),
     timestamp: new Date(data.datetime || Date.now()).getTime(),
+    currency: data.currency || undefined,
   }
 }
 

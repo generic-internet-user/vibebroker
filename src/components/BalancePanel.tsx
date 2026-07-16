@@ -10,13 +10,14 @@ export function BalancePanel({ portfolio }: Props) {
   const { state } = useApp()
   const rates = useFxRates(portfolio.baseCurrency, portfolio.positions.map(p => p.currency || 'USD'))
   const rate = (c: string) => rates[c] || 1
+  const currencyOf = (p: typeof portfolio.positions[number]) => state.quotes[p.symbol]?.currency || p.currency || 'USD'
 
   const totalValue = portfolio.cashBalance + portfolio.positions.reduce((s, p) => {
     const quote = state.quotes[p.symbol]
-    return s + (quote?.price || p.currentPrice) * p.quantity * rate(p.currency || 'USD')
+    return s + (quote?.price || p.currentPrice) * p.quantity * rate(currencyOf(p))
   }, 0)
 
-  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity * rate(p.currency || 'USD'), 0)
+  const totalInvested = portfolio.positions.reduce((s, p) => s + p.averageCost * p.quantity * rate(currencyOf(p)), 0)
   const totalPnL = totalValue - portfolio.cashBalance - totalInvested
   const realizedPnL = portfolio.realizedPnL ?? 0
   const totalReturn = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0

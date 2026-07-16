@@ -37,10 +37,59 @@ async function tryProviders<T>(
   throw lastError || new Error(`No provider available for ${useCase}`)
 }
 
+const currencyCache = new Map<string, { currency?: string; expires: number }>()
+const CURRENCY_TTL_MS = 60 * 60 * 1000
+
+async function resolveCurrency(
+  symbol: string,
+  providers: Provider[],
+  source: Provider,
+  quote: Quote
+): Promise<string | undefined> {
+  if (quote.currency) return quote.currency
+
+  const cached = currencyCache.get(symbol)
+  if (cached && cached.expires > Date.now()) return cached.currency
+
+  let found: string | undefined
+  for (const p of providers) {
+    if (p === source) continue
+    try {
+      const q = await PROVIDERS[p].getQuote!(symbol)
+      if (q.currency) {
+        found = q.currency
+        break
+      }
+    } catch { }
+  }
+
+  currencyCache.set(symbol, { currency: found, expires: Date.now() + CURRENCY_TTL_MS })
+  return found
+}
+
 export async function getQuote(symbol: string): Promise<Quote> {
-  return tryProviders('quote', 'getQuote',
-    (p) => PROVIDERS[p].getQuote!(symbol)
+  const providers = getPriority('quote').filter(
+    (p) => typeof (PROVIDERS[p] as Record<string, unknown>).getQuote === 'function'
   )
+
+  let quote: Quote | null = null
+  let source: Provider | null = null
+  let lastError: unknown
+
+  for (const p of providers) {
+    try {
+      quote = await PROVIDERS[p].getQuote!(symbol)
+      source = p
+      break
+    } catch (err) {
+      lastError = err
+    }
+  }
+
+  if (!quote) throw lastError || new Error('No provider available for quote')
+
+  const currency = await resolveCurrency(symbol, providers, source as Provider, quote)
+  return currency ? { ...quote, currency } : quote
 }
 
 export async function getProfile(symbol: string): Promise<Asset | null> {

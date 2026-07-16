@@ -18,6 +18,7 @@ export interface Quote {
   open: number
   previousClose: number
   timestamp: number
+  currency?: string
 }
 
 export interface OHLCV {
